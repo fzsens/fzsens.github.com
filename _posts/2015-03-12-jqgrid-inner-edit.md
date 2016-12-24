@@ -1,4 +1,12 @@
-## jQgrid 行内编辑
+---
+layout: post
+title: jQgrid 行内编辑
+date: 2015-3-12
+categories: js
+tags: [js,jQuery,jqGrid]
+description: jqGrid实现行内编辑工程
+---
+
 jQgrid是一个基于jQuery实现的表格插件，提供了十分丰富的API以供开发者使用，不过也由于版本更迭和本身支持的原因，在网络上查找一些相关资料的时候，总是会有许多种不同的解决方案。下面描述一个使用jQgrid3.8.2来实现的行内编辑功能。  
 下面为进行行内编辑的Grid代码，可用的编辑单元格为’useCount’和’loadRate’. 单元格光标移除之后，将数据保存到本地Table。  
 

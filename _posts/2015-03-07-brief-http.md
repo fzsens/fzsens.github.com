@@ -1,4 +1,11 @@
-## HTTP协议简述
+---
+layout: post
+title: HTTP协议简述
+date: 2015-3-07
+categories: web
+tags: [HTTP]
+description: 简单表述HTTP协议以及一些相关知识
+---
 
 超文本传输协议（`HyperText Transfer Protocol，HTTP`），是现行互联网应用最广泛的网络协议。最初的HTTP协议设计用于发送和接收HTML。经过发展演变成为客户端和服务器进行请求(`Request`)和响应(`Response`)的标准协议。要了解HTTP的运行过程，需要了解大体OSI模型
 

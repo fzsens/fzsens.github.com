@@ -1,4 +1,12 @@
-## Java ClassLoader 运行机制
+---
+layout: post
+title: Java ClassLoader 运行机制
+date: 2015-3-20
+categories: java
+tags: [java,classloader]
+description: 介绍Java ClassLoader运行机制
+---
+
 ### 什么是ClassLoader
 Java类要在程序中使用，需要加载到虚拟机中；执行这一过程的类就是类加载器(`ClassLoader`)。`ClassLoader`一般通过类的全限定名称，从网络(比如`Applet`)、文件系统、内存(由代码生成的类)中加载类的二进制字节流，通过校验和链接等一系列动作之后，将类加载到虚拟机中。每一个在虚拟机中的类都可以找到对应的类加载器，通过`Class.getClassLoader()`来获取得到其类加载器。
 

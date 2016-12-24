@@ -1,4 +1,12 @@
-## 为 Future 添加监听事件
+---
+layout: post
+title: 为Future添加监听事件
+date: 2015-3-20
+categories: java
+tags: [java,concurrent,并发,回调]
+description: 为Future增加回调方法避免手工代码轮询
+---
+
 在Java并发工具包`java.util.concurrent`中，高级的工具分成三类：`Executor Framework` 、并发集合`Concurrent Collection`以及同步器`Synchronizer`。其中的`Executor Framework` 通过控制`Thread`的启动，执行和关闭，简化了线程管理。内建对异步并发管理，允许线程异步返回。典型的`Executor`使用方法如下
 
 ````java

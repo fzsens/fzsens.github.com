@@ -1,11 +1,11 @@
 ---
 layout: page
-title: "Tags"
-description: "关键字分类"  
+title: "文章标签"
+description: "文章标签"  
 header-img: "img/semantic.jpg"  
 ---
 
-##Tags列表
+##标签列表
 
 
 <div id='tag_cloud'>

@@ -3,7 +3,7 @@ layout: post
 title: jQgrid 行内编辑
 date: 2015-3-12
 categories: js
-tags: [js,jQuery,jqGrid]
+tags: [jQGrid]
 description: jqGrid实现行内编辑工程
 ---
 

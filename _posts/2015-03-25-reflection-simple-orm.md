@@ -3,7 +3,7 @@ layout: post
 title: 基于反射实现简单的ORM
 date: 2015-3-20
 categories: java
-tags: [java,orm,ficus,reflection]
+tags: [orm]
 description: 基于反射实现ORM
 ---
 

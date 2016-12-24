@@ -3,7 +3,7 @@ layout: post
 title: Ruby的运行过程
 date: 2015-3-10
 categories: programming
-tags: [Ruby,运行过程]
+tags: [Ruby]
 description: Ruby以及同类型脚本的执行流程
 ---
 

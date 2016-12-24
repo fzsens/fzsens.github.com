@@ -3,7 +3,7 @@ layout: post
 title: Java ClassLoader 运行机制
 date: 2015-3-20
 categories: java
-tags: [java,classloader]
+tags: [classloader]
 description: 介绍Java ClassLoader运行机制
 ---
 

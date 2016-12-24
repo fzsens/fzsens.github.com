@@ -3,7 +3,7 @@ layout: post
 title: 为Future添加监听事件
 date: 2015-3-20
 categories: java
-tags: [java,concurrent,并发,回调]
+tags: [并发回调]
 description: 为Future增加回调方法避免手工代码轮询
 ---
 

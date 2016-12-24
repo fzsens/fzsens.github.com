@@ -58,6 +58,7 @@ spring jdbctemplate是由spring项目派生出来的一个组件，对jdbc进行
 ````
 
 - 创建业务对象，将元数据和编码绑定。
+
 ````java
   @TableName("T_USR")
   public class TUsrModel extends BaseModel{

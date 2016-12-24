@@ -21,9 +21,9 @@ System.out.println(v);
 service.shutdown();
 ````
 
-- 创建线程池
-- 提交执行任务(`Runnable`,或者为`Callable`)
-- 调用`Future`的`get`方法，获得返回结果
+>- 创建线程池
+>- 提交执行任务(`Runnable`,或者为`Callable`)
+>- 调用`Future`的`get`方法，获得返回结果
 
 线程并发的目的，主要在于提高CPU的利用率，从而提高程序性能。在我们创建和提交线程之后，经常需要在线程执行完毕之后进行一些回调操作，`Executor Framework`也提供了相应的处理机制。调用`sumbit`方法之后，会立即返回的`Future`表示异步计算的结果，使用`future.get()`会堵塞线程直到线程执行完毕将对应的结果返回(暂不考虑异常处理)。
 

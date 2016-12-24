@@ -21,7 +21,7 @@ header-img: "img/facebook.jpg"
 - 宗教历史
 
 
-###联系
+### 联系
 
 - [博客：www.qiongsong.com](www.qiongsong.com)
 

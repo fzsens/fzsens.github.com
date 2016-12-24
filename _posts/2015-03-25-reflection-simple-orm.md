@@ -1,8 +1,12 @@
 ## 基于反射实现简单的ORM
 面向对象语言的一个优势在于抽象，将现实的业务需求抽象和构造成为程序的可用实体对象，使程序员在编程时候的思考方式更加贴近现实业务的运转方式。另一方面数据在使用过程中又经常会需要持久化，一般可以简单理解成将数据存储到数据库中。现在流行的关系数据库(NoSQL另做讨论)主要以表(具有行和列)为对外提供展示和保存数据的基础结构，行表述存储的数据量，列标识数据的模式(`Schema`)。如果使用面向对象语言和关系型数据库进行数据对应的话，即为列(模式)，对应抽象编程对象中的属性。
+
 ![来自wikipedia](http://i.imgur.com/hZwW64i.png)
-ORM(`Object Relection Mapping`)，关系对象映射，用于实现面向对象编程语言里不同类型系统的数据之间的转换。在Java社区中有很多成熟的ORM框架，诸如Mybatis,Hibernate等，通过配置或者注解的形式，或自动或手动，将对象和数据库建立映射。从而简化开发中对数据持久问题的处理。  
+
+ORM(`Object Relection Mapping`)，关系对象映射，用于实现面向对象编程语言里不同类型系统的数据之间的转换。在Java社区中有很多成熟的ORM框架，诸如Mybatis,Hibernate等，通过配置或者注解的形式，或自动或手动，将对象和数据库建立映射。从而简化开发中对数据持久问题的处理。
+
 spring jdbctemplate是由spring项目派生出来的一个组件，对jdbc进行了轻度封装，用于简化Java对数据库的操作。一个常用的jdbctemplate使用例子如下：
+
 ````java
   Actor actor = this.jdbcTemplate.queryForObject(
   "select first_name, last_name from t_actor where id = ?",
@@ -16,9 +20,13 @@ spring jdbctemplate是由spring项目派生出来的一个组件，对jdbc进行
       }
   });
 ````
-查询语句执行的结果存储在`ResultSet`中与`JDBC`一致，查询之后的`ResultSet`即模拟了关系数据库中的表的结构。通过`getXXX(“columnName”)`; 可获得对应行的列值，这部分关于`ResutSet`的操作过程实际上就是完成了从关系到对象的映射过程。如果对象中自带获取关系的元数据(参考元编程)，这个ORM过程就可以通过程序自动构建完成。  
-类似Lisp或者Ruby，通过自身极强的可拓展性，可以很方便地实现自我管理。而Java对于运行时`Rumtime`代码提供更改的方式就显得比较笨重，较为常用的方法即为放射`Reflection`,放射提供了一整套方法可以在代码运行时候进行访问和更改。注解`Annotation`则提供了可以向代码中附着元数据的方式。下面就使用放射和注解的方式，尝试在spring jdbctemplate构建一个简单的ORM框架。关系数据库选择Oracle，其中的一些语句迁移到其他的数据库上，可能需要进行一些更改，本文主要以说明问题为主。  
-1. 首先定义元数据，即为Annotation，对于简单的数据库操作(CRUD)来讲，关注的主要有：表名，字段名，主键(用于插入和删除)，主键生成规则(Oracle中可选取Sequence)等。这些原数据搭建了代码对象到数据库的桥梁。
+
+查询语句执行的结果存储在`ResultSet`中与`JDBC`一致，查询之后的`ResultSet`即模拟了关系数据库中的表的结构。通过`getXXX(“columnName”)`; 可获得对应行的列值，这部分关于`ResutSet`的操作过程实际上就是完成了从关系到对象的映射过程。如果对象中自带获取关系的元数据(参考元编程)，这个ORM过程就可以通过程序自动构建完成。
+
+类似Lisp或者Ruby，通过自身极强的可拓展性，可以很方便地实现自我管理。而Java对于运行时`Rumtime`代码提供更改的方式就显得比较笨重，较为常用的方法即为放射`Reflection`,放射提供了一整套方法可以在代码运行时候进行访问和更改。注解`Annotation`则提供了可以向代码中附着元数据的方式。下面就使用放射和注解的方式，尝试在spring jdbctemplate构建一个简单的ORM框架。关系数据库选择Oracle，其中的一些语句迁移到其他的数据库上，可能需要进行一些更改，本文主要以说明问题为主。
+
+- 首先定义元数据，即为Annotation，对于简单的数据库操作(CRUD)来讲，关注的主要有：表名，字段名，主键(用于插入和删除)，主键生成规则(Oracle中可选取Sequence)等。这些原数据搭建了代码对象到数据库的桥梁。
+
 ````java
   //表名
   @Target(ElementType.TYPE)
@@ -48,8 +56,10 @@ spring jdbctemplate是由spring项目派生出来的一个组件，对jdbc进行
     public String value() default "";
   }
 ````
-2. 创建业务对象，将元数据和编码绑定。
-````java
+
+- 创建业务对象，将元数据和编码绑定。
+`
+```java
   @TableName("T_USR")
   public class TUsrModel extends BaseModel{
     
@@ -72,7 +82,9 @@ spring jdbctemplate是由spring项目派生出来的一个组件，对jdbc进行
     **/
   }
 ````
-3. 如何将一个具有元数据的Java实体对象持久化到数据库中，最简单的方式即为通过放射构建出插入语句，将实体对象中的值作为插入条件
+
+- 如何将一个具有元数据的Java实体对象持久化到数据库中，最简单的方式即为通过放射构建出插入语句，将实体对象中的值作为插入条件
+
 ````java
   public class SQLContext {
       /**
@@ -98,7 +110,9 @@ spring jdbctemplate是由spring项目派生出来的一个组件，对jdbc进行
       
   }
 ````
+
 SQLContext存储需要执行的SQL语句以及对应的参数
+
 ````java
 public class EntityUtils {
   
@@ -283,7 +297,9 @@ public class EntityUtils {
   }
 }
 ````
+
 EntityUtils 提供获取对象元数据的方法封装，并提供并发安全的缓存处理。
+
 ````java
   public class ClassUtils {
     private static final Map<Class<?>, BeanInfo> classCache = 
@@ -318,7 +334,9 @@ EntityUtils 提供获取对象元数据的方法封装，并提供并发安全�
       }
   }
 ````
+
 ClassUtils获取Java对象的属性即为`BeanInfo`
+
 ````java
   public static SQLContext buildInsertSql(Object entity) {
       Class<?> clazz = entity.getClass();
@@ -358,7 +376,9 @@ ClassUtils获取Java对象的属性即为`BeanInfo`
       return new SQLContext(sql, primaryName, params);
   }
 ````
+
 通过对对象属性的操作和构建，便可获得插入语句
+
 ````java
  public Long insert(Object entity) {
     final SQLContext sqlContext = SQLHelper.buildInsertSql(entity);
@@ -384,7 +404,9 @@ ClassUtils获取Java对象的属性即为`BeanInfo`
     return keyHolder.getKey().longValue();
  }
 ````
+
 实际使用中，另外一个使用频率较高的方法为查询方法，如之前jdbctemplate的使用例子所示。需要手工进行关系对象的映射，而现在对象本身就带有映射信息。因此这个动作也可以自动构建完成。
+
 ````java
 public class DefaultRowMapper<T> implements RowMapper<T>{
 
@@ -431,7 +453,9 @@ public class DefaultRowMapper<T> implements RowMapper<T>{
     }
 }
 ````
+
 实现spring jdbctemplate的`RowMapper`接口，其中的mapRow类即为处理对象和关系映射的方法。构建的基础也是基于元数据之上。
+
 ````java
 public static final String SELECT_USER_BY_USER_PWD = ""
       + " select * from t_usr t "
@@ -447,8 +471,9 @@ MapSqlParameterSource param = new MapSqlParameterSource();
         param,
         new DefaultRowMapper<TUsrModel>(TUsrModel.class));
 ````
+
 即可实现查询时候的映射。
-其中涉及到的事务控制和其他安全控制，此处就不一一列举，通过spring的IOC，以及`DataSourceTransactionManager`，可以构建出自己的事务管理系统。  
+其中涉及到的事务控制和其他安全控制，此处就不一一列举，通过spring的IOC，以及`DataSourceTransactionManager`，可以构建出自己的事务管理系统。
 
 总结：相比较Ruby的元编程，使用Java来处理程序自管理显得额外繁琐，异常机制也带来了大量不必要的代码冗余。但是如果能够善用反射和注解，也能够给工作带来极大的便利。  
 

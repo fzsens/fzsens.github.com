@@ -1,5 +1,5 @@
 ## 为 Future 添加监听事件
-在Java并发工具包`java.util.concurrent`中，高级的工具分成三类：`Executor Framework` 、并发集合`Concurrent Collection`以及同步器`Synchronizer`。其中的`Executor Framework` 通过控制`Thread`的启动，执行和关闭，简化了线程管理。内建对异步并发管理，允许线程异步返回。典型的`Executor`使用方法如下  
+在Java并发工具包`java.util.concurrent`中，高级的工具分成三类：`Executor Framework` 、并发集合`Concurrent Collection`以及同步器`Synchronizer`。其中的`Executor Framework` 通过控制`Thread`的启动，执行和关闭，简化了线程管理。内建对异步并发管理，允许线程异步返回。典型的`Executor`使用方法如下
 
 ````java
 ExecutorService service = Executors.newCachedThreadPool();
@@ -18,7 +18,8 @@ service.shutdown();
 - 调用`Future`的`get`方法，获得返回结果
 
 线程并发的目的，主要在于提高CPU的利用率，从而提高程序性能。在我们创建和提交线程之后，经常需要在线程执行完毕之后进行一些回调操作，`Executor Framework`也提供了相应的处理机制。调用`sumbit`方法之后，会立即返回的`Future`表示异步计算的结果，使用`future.get()`会堵塞线程直到线程执行完毕将对应的结果返回(暂不考虑异常处理)。  
-如果同事提交多个线程，并希望在每个线程线程执行完成之后立即能够执行对应的回调操作，就需要实时监控`future.get()`，最初的设想采用轮询操作,通过对Future进行实时遍历来处理回调，代码如下：  
+如果同事提交多个线程，并希望在每个线程线程执行完成之后立即能够执行对应的回调操作，就需要实时监控`future.get()`，最初的设想采用轮询操作,通过对Future进行实时遍历来处理回调，代码如下：
+
 ````java
 public static void main(String[] args) {
   ExecutorService service = Executors.newCachedThreadPool();
@@ -52,7 +53,6 @@ public static void main(String[] args) {
     }
     //③
   }
-  
   }
   //轮询检查是否所有的Future都处理完毕
   public static boolean isAllDone(List<Future<String>> futures) {
@@ -65,10 +65,12 @@ public static void main(String[] args) {
   return true;
 }
 ````
+
 上面的代码，使用了轮询来处理Future列表监控状态的变化，在`while`循环中，判断这个结果。但是这个方案存在一个重大的缺陷，及在执行完`③`到执行`④`之间的时间内，可能有一些Future 的状态变化为已经完成，则`isAllDone`测试为`ture`，循环会退出。因此这一些Future的返回结果无法被正确处理。  
 因此在外部想要实时监控Future的状态存在一定的困难，想要避免`get()`方法的等待，就必须使用实时返回结构的`isDone()`来识别Future的执行情况，但是由于状态的处理和线程监控程序存在时间差异，因此很难保证结果的一致性，很容易因为状态的变化，而导致异常。  
 如果能够让Future自己监控自己的执行结果，从而能够主动调用回调函数，那么这个问题就迎刃而解了。有一些类似C#中的`delegate`机制，通过委托调用，当发生特定事件时，就可以自动调用回调方法。  
 1. 首先创建拓展Future,添加监听的功能，入参为回调方法和执行回调方法的线程执行器。
+
 ````java
 /**
    * 拓展Future 增加监听行为
@@ -84,7 +86,9 @@ public static void main(String[] args) {
     void addListener(Runnable listener, Executor executor);
   }
 ````
+
 2. 创建Futrue的状态代理
+
 ````java
 /**
    * 
@@ -122,7 +126,9 @@ public static void main(String[] args) {
     
   }
 ````
+
 3. 创建包装类，在此处实现事件的监听和调用
+
 ````java
   /**
    * Future 包装类
@@ -188,7 +194,9 @@ public static void main(String[] args) {
 
   }
 ````
+
 4. 测试方法
+
 ````java
   ExecutorService executor = Executors.newCachedThreadPool();
   ExecutorService callBackExecutor = Executors.newCachedThreadPool();

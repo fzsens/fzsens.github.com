@@ -1,7 +1,7 @@
 ---
 layout: page
-title: "日期归档"
-description: "文章归档"
+title: "归档"
+description: "千里之行始于足下"
 header-img: "img/orange.jpg"
 ---
 

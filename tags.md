@@ -1,7 +1,7 @@
 ---
 layout: page
-title: "文章标签"
-description: "文章标签"  
+title: "标签"
+description: "雄州霧列，俊采星馳"  
 header-img: "img/semantic.jpg"  
 ---
 

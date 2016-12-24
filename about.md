@@ -1,7 +1,7 @@
 ---
 layout: page
 title: "我是何人"
-description: "覆杯水于坳堂之上 则芥为之舟"
+description: "覆杯水于坳堂之上，則芥爲之舟"
 header-img: "img/facebook.jpg"
 ---
 

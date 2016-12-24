@@ -7,7 +7,7 @@ tags: [java,classloader]
 description: 介绍Java ClassLoader运行机制
 ---
 
-### 什么是ClassLoader
+###什么是ClassLoader
 Java类要在程序中使用，需要加载到虚拟机中；执行这一过程的类就是类加载器(`ClassLoader`)。`ClassLoader`一般通过类的全限定名称，从网络(比如`Applet`)、文件系统、内存(由代码生成的类)中加载类的二进制字节流，通过校验和链接等一系列动作之后，将类加载到虚拟机中。每一个在虚拟机中的类都可以找到对应的类加载器，通过`Class.getClassLoader()`来获取得到其类加载器。
 
 一个类不能被重复加载到同一个`ClassLoader`中；同一个类被不同`ClassLoader`加载，在JVM中相当于是两个不同的类。  
@@ -24,7 +24,7 @@ System.out.println(clazz1 == clazz2);
 
 输出的值为 `false`。
 
-### ClassLoader的分类
+###ClassLoader的分类
 类加载器可以分成四种类型
 
 - **Boostrap ClassLoader** 引导类加载器(C++实现)，用于加载Java运行时需要的核心类，如`rt.jar`等
@@ -32,7 +32,7 @@ System.out.println(clazz1 == clazz2);
 - **系统类加载器(AppClassLoader)** 将系统类路径(ClassPath)下的类库加载入内存，可以通过 `ClassLoader.getSystemClassLoader()` 来获取对应的实例，通过`System.getProperty("java.class.path")`来获取加载的文件路径
 - **自定义的ClassLoader** 一般通过继承`ClassLoader`，通过自定义`DefineClass`来实现自定义类加载。
 
-### ClassLoader 运行机制
+###ClassLoader 运行机制
 
 `ClassLoader`在实现的时候使用层级委托的形式，除了引导类加载器之外的每一个`ClassLoader`都具有父`ClassLoader`,如下图：
 
@@ -74,7 +74,7 @@ protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundE
 
 `ClassLoader`类为类加载器的抽象类，`AppClassLoader` 以及 `ExtClassLoader` 都继承自 `ClassLoader` 类，`loadClass`为调用累加载的入。在`loadClass`方法中进行向上委托而无法顺利加载类的时候就会调用`findClass`方法；这个方法也是官方推荐自定义`ClassLoader`时候实现的方法，在`ClassLoader`中`findClass`为抽象方法，需要在各个实现类中实现。使用逐级委托的调用方式，可以保证Java中的核心类可以正确加载到对应的类加载器中。如 `java.lang.Object`和`java.lang.Object` 等核心类被`Boostrap ClassLoader`加载之后，可以避免再被加载到自定义的`ClassLoader`中，而使得系统中具有多个 `java.lang.Object`，实际上如果使用默认的`defineClass`进行核心类的加载会报出`java.lang.SecurityException:Prohibited package name: java.lang`错误，这也是虚拟机安全机制的一部分。
 
-### 如何自定义ClassLoader
+###如何自定义ClassLoader
 为了保证类加载的符合委托加载机制，官方给出的建议是实现`findClass`方法，实现类全限定名->二进制字节->内存中的Class对象的转换需要在`protected final Class<?> defineClass(String name, byte[] b, int off, int len)`方法中实现,下面我们自定义类加载器从，文件系统中加载Class文件到虚拟机中。
 
 自定义的类加载器，继承`ClassLoader`类，实现`findClass`方法
@@ -173,7 +173,7 @@ false
 
 `Class<?> forName(String name, boolean initialize, ClassLoader loader)`可以通过类全限定名来获取Class,如果未指定loader参数，默认使用当前调用类的类加载器。`Class.forName(“Foo”)等同于 Class.forName(“Foo”, true, this.getClass().getClassLoader())`
 
-### 类并发加载
+###类并发加载
 
 为保证同一个类只能在一个ClassLoader中加载一次，需要对loadClass进行同步，在上文中举例的`ClassLoader`的`loadClass`方法为Java1.7以及之后的实现，在Java1.6的实现为
 

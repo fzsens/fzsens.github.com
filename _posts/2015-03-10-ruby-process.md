@@ -1,13 +1,11 @@
 ---
 layout: post
-title: HTTP协议简述
+title: Ruby的运行过程
 date: 2015-3-10
 categories: programming
 tags: [Ruby,运行过程]
 description: Ruby以及同类型脚本的执行流程
 ---
-
-## Ruby的运行过程
 
 1. Ruby是一门脚本语言，默认是按照语句出现的顺序进行执行，通过控制结构可以变化行为，比如循环等。
 

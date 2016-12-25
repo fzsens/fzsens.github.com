@@ -12,8 +12,7 @@ description: 介绍Mybatis常用使用方法
 
 ### 创建SqlSessionFactory
 
-在jdbc中，操作数据库的接口为`Connection`，在Mybatis应用中，这个接口被`SqlSession`封装，而产生SqlSession的对象则是SqlSessionFactory，从名称就可以看出是一个工厂类。每一个Mybatis应用（单个数据源），一般都有且仅有一个SqlSessionFactory实例，并围绕这个实例构建应用的数据库操作层。
-
+在jdbc中，操作数据库的接口为`Connection`，在Mybatis应用中，这个接口被`SqlSession`封装，而产生SqlSession的对象则是SqlSessionFactory，从名称就可以看出是一个工厂类。每一个Mybatis应用（单个数据源），一般都有且仅有一个SqlSessionFactory实例，并围绕这个实例构建应用的数据库操作层。  
 因此要使用Mybatis首先要创建一个SqlSessionFactory。而SqlSessionFactory一般都是使用SqlSessionFactoryBuilder创建，SqlSessionFactoryBuilder又可以使用XML或者编程方式的Configuration创建。
 
 >在Java编程体系中，XML作为一种标记语言被广泛使用作为配置文件的定义，但是实际上在后台都会有对应的Translator程序，将XML翻译称为对应的Java对象式的数据结构，才能被系统真正读取，例如Spring中的Bean都会被翻译称为BeanDefinition实例。

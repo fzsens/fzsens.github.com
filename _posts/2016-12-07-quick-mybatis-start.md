@@ -18,7 +18,8 @@ description: 介绍Mybatis常用使用方法
 
 >在Java编程体系中，XML作为一种标记语言被广泛使用作为配置文件的定义，但是实际上在后台都会有对应的Translator程序，将XML翻译称为对应的Java对象式的数据结构，才能被系统真正读取，例如Spring中的Bean都会被翻译称为BeanDefinition实例。
 
-此处主要为了说明Mybatis这几个核心对象之间的关系，因此使用编程方式来进行配置，同时也会给出对应的XML配置，但是后者不会做过多的说明。  
+此处主要为了说明Mybatis这几个核心对象之间的关系，因此使用编程方式来进行配置，同时也会给出对应的XML配置，但是后者不会做过多的说明。
+
 ````java
 //1. create datasource
 BasicDataSource ds = new BasicDataSource();
@@ -37,7 +38,8 @@ SqlSessionFactory sqlSessionFactory = builder.build(configuration);
 
 要创建一个SqlSessionFactory，两个核心为：用于获取数据库连接的DataSource；决定事务作用域和操作的TransactionManager。
 
-对应的XML配置为  
+对应的XML配置为
+
 ````xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE configuration
@@ -62,7 +64,8 @@ PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
 
 ### 获取SqlSession
 
-获取sqlSessionFactory之后，通过  
+获取sqlSessionFactory之后，通过
+
 ````java
 SqlSession sqlSession = sqlSessionFactory.openSession();
 ````
@@ -77,7 +80,8 @@ SqlSession sqlSession = sqlSessionFactory.openSession();
 
 >Author包含三个字段（id、name、blocked）,用于记录作者的基本信息。需要完成这张表的增删改查操作。
 
-首先定义Author的数据抽象，很简单的POJO  
+首先定义Author的数据抽象，很简单的POJO
+
 ````java
 public class Author {
     private long    id;
@@ -87,7 +91,8 @@ public class Author {
 }
 ````
 
-其次定义Author的Mapper接口，用于绑定和标识XML/Annotation中的SQL语句  
+其次定义Author的Mapper接口，用于绑定和标识XML/Annotation中的SQL语句
+
 ````java
 public interface AuthorMapper {
     public int count();
@@ -98,7 +103,8 @@ public interface AuthorMapper {
 }
 ````
 
-在这边使用最常见的XML配置的方式，因此需要在同一个package 目录下创建Mybatis MapperXML配置  
+在这边使用最常见的XML配置的方式，因此需要在同一个package 目录下创建Mybatis MapperXML配置
+
 ````xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
@@ -121,7 +127,8 @@ public interface AuthorMapper {
 </mapper>
 ````
 
-在编写XML的时候，有两个点需要注意：MapperXML的namespace对应到AuthorMapper的全限定名称；每一个XML标签都有一个ID，对应到AuthorMapper接口的方法名。如果是简单的操作，也可以使用Annotation 注解的方式将两者合二为一。  
+在编写XML的时候，有两个点需要注意：MapperXML的namespace对应到AuthorMapper的全限定名称；每一个XML标签都有一个ID，对应到AuthorMapper接口的方法名。如果是简单的操作，也可以使用Annotation 注解的方式将两者合二为一。
+
 ````java
 public interface AuthorMapper {
     @Select("select count(1) from author;")
@@ -137,7 +144,8 @@ public interface AuthorMapper {
 }
 ````
 
-到目前为止，定义了操作数据库语句（XML SQL），以及这些语句的定位标识（Mapper接口），这两部分构成了Mybatis的操作映射器。为了能对数据库进行操作，还需要将映射器与Mybatis框架建立关联，我们可以通过在Configuration定义的时候，进行Mapper接口注入来达到绑定的作用。  
+到目前为止，定义了操作数据库语句（XML SQL），以及这些语句的定位标识（Mapper接口），这两部分构成了Mybatis的操作映射器。为了能对数据库进行操作，还需要将映射器与Mybatis框架建立关联，我们可以通过在Configuration定义的时候，进行Mapper接口注入来达到绑定的作用。
+
 ````java
 TransactionFactory transactionFactory = new JdbcTransactionFactory();
 Environment environment = new Environment("development", transactionFactory, ds);
@@ -359,6 +367,7 @@ Mybatis提供了很多的配置属性参数，可以根据不同的应用场景�
 	- 二级缓存基于命名空间（MapperXML中配置），可以跨越多个SqlSession共享。并可以通过配置设置定时过期的时间，以及大小限制。但是有一个地方需要特别注意，二级缓存基于命名空间创建也就是，一般情况下，多个Mapper之间的缓存数据是不相互影响的，同一个Mapper中，发生数据更改，可以由Mybatis自动完成缓存更新，但如果相同数据存储在不同的Mapper中，则可能由于二级缓存的启用，带来数据不一致的问题。
 
 	在Mybatis-Spring中事务的管理交由Spring事务管理器完成，每一个Sql语句的执行完成后都会执行sqlSession.close()方法，因此在Mybatis-Spring体系中，一级缓存无法生效。而二级缓存因为可以跨越SqlSession存在因此不受影响。
+
 	````xml
 	<mapper namespace="com.sinoservices.mybatis.mapper.AuthorMapper">
     <cache

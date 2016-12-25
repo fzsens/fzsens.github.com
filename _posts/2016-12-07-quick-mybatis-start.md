@@ -108,8 +108,8 @@ public interface AuthorMapper {
 ````xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.sinoservices.mybatis.mapper.AuthorMapper">
-    <select id="selectList" resultType="com.sinoservices.mybatis.domain.Author">
+<mapper namespace="com.qiongsong.mybatis.mapper.AuthorMapper">
+    <select id="selectList" resultType="com.qiongsong.mybatis.domain.Author">
     	select * from author;
     </select>
     <select id="count" resultType="int">
@@ -166,7 +166,7 @@ int deletedRow = authorMapper.delete("Yuhua");
 List<Author> list = authorMapper.selectList();
 ````
 
->执行上面的SQL也可以使用类似`List<Author> list = sqlSession.selectList("com.sinoservices.mybatis.mapper.AuthorMapper.selectList");`的方式，后续原理解析会解释为什么可以这样
+>执行上面的SQL也可以使用类似`List<Author> list = sqlSession.selectList("com.qiongsong.mybatis.mapper.AuthorMapper.selectList");`的方式，后续原理解析会解释为什么可以这样
 
 ### 作用域的控制
 
@@ -304,7 +304,7 @@ SqlSession sqlSession = sqlSessionFactory.openSession(true);
     <constructor-arg index="0" ref="sqlSessionFactory"/>
 </bean>
 <bean id="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-    <property name="basePackage" value=" com.sinoservices.**.mapper"/>
+    <property name="basePackage" value=" com.qiongsong.**.mapper"/>
     <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
 </bean>
 ````
@@ -338,7 +338,7 @@ MapperScannerConfigurer用于自动扫描和注入映射器（Mapper），利用
 </tx:advice>
 <aop:config proxy-target-class="true">
     <aop:advisor advice-ref="txAdvice"
-                 pointcut="execution(* com.sinoservices..service..*.*(..))"
+                 pointcut="execution(* com.qiongsong..service..*.*(..))"
                  order="100"/>
 </aop:config>
 ````
@@ -367,15 +367,6 @@ Mybatis提供了很多的配置属性参数，可以根据不同的应用场景�
 	- 二级缓存基于命名空间（MapperXML中配置），可以跨越多个SqlSession共享。并可以通过配置设置定时过期的时间，以及大小限制。但是有一个地方需要特别注意，二级缓存基于命名空间创建也就是，一般情况下，多个Mapper之间的缓存数据是不相互影响的，同一个Mapper中，发生数据更改，可以由Mybatis自动完成缓存更新，但如果相同数据存储在不同的Mapper中，则可能由于二级缓存的启用，带来数据不一致的问题。
 
 	在Mybatis-Spring中事务的管理交由Spring事务管理器完成，每一个Sql语句的执行完成后都会执行sqlSession.close()方法，因此在Mybatis-Spring体系中，一级缓存无法生效。而二级缓存因为可以跨越SqlSession存在因此不受影响。
-
-	````xml
-	<mapper namespace="com.sinoservices.mybatis.mapper.AuthorMapper">
-    <cache
-        eviction="FIFO"
-        flushInterval="60000"
-        size="512"
-        readOnly="true" />
-	````
 
 - Mybatis在ORM这个基础功能，也提供了丰富的应用，通过ResultMap可以实现复杂的映射对照。在实际编程中，因为基本都是简单的POJO映射，更推荐使用ResultType，由Mybatis自动完成映射工作。
 - 插件机制，大多数流行的框架都会围绕一个内核构建一套扩展机制。在Mybatis中则是围绕SqlSession构建，通过插件拦截器和调用链机制，完成拓展功能。

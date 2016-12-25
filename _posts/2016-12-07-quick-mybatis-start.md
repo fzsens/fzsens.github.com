@@ -10,7 +10,7 @@ description: 介绍Mybatis常用使用方法
 >上一章花费了大量时间描述了Mybatis的产生背景，本章主要参考[Mybatis的官方用户文档](http://www.mybatis.org/mybatis-3/zh/getting-started.html) 简要表述Mybatis的使用方法，并使用一个例子贯穿进行说明和讲解。
 >如果想要彻底了解Mybatis的使用和配置方式，都可以通过官方用户文档来获取相关的配置资料，本章只适合作为导读
 
-###创建SqlSessionFactory
+### 创建SqlSessionFactory
 
 在jdbc中，操作数据库的接口为`Connection`，在Mybatis应用中，这个接口被`SqlSession`封装，而产生SqlSession的对象则是SqlSessionFactory，从名称就可以看出是一个工厂类。每一个Mybatis应用（单个数据源），一般都有且仅有一个SqlSessionFactory实例，并围绕这个实例构建应用的数据库操作层。
 

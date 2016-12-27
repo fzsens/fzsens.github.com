@@ -1,7 +1,7 @@
 ---
 layout: post
 title: 快学Mybatis-内部原理
-date: 2016-12-11
+date: 2016-12-25
 categories: mybatis
 tags: [mybatis]
 description: 介绍Mybatis主要行为的代码实现
@@ -26,7 +26,7 @@ MapperAnnotationBuilder parser = new MapperAnnotationBuilder(config, type);
 parser.parse();
 ````
 
-在parser.parse()方法中
+在`parser.parse()`方法中
 
 ````java
 public void parse() {
@@ -269,22 +269,24 @@ public <E> List<E> query(Statement statement, ResultHandler resultHandler) throw
 在问题3中，`PreparedStatement`已经完成执行，并委托给`DefaultResultHandler`来进行处理， 具体的从`ResultSet`到对象的映射关系也在这边完成。
 
 ````java
-final List<Object> multipleResults = new ArrayList<Object>();
-int resultSetCount = 0;
-ResultSetWrapper rsw = getFirstResultSet(stmt);
-//得到当前语句执行的所有ResultMap,一般只会有一个
-List<ResultMap> resultMaps = mappedStatement.getResultMaps();
-int resultMapCount = resultMaps.size();
-validateResultMapsCount(rsw, resultMapCount);
-while (rsw != null && resultMapCount > resultSetCount) {
-  //存在多个ResultMap循环处理
-  ResultMap resultMap = resultMaps.get(resultSetCount);
-  //处理结果集
-  handleResultSet(rsw, resultMap, multipleResults, null);
-  rsw = getNextResultSet(stmt);
-  cleanUpAfterHandlingResultSet();
-  resultSetCount++;
-}
+  final List<Object> multipleResults = new ArrayList<Object>();
+  int resultSetCount = 0;
+  ResultSetWrapper rsw = getFirstResultSet(stmt);
+
+  //得到当前语句执行的所有ResultMap,一般只会有一个
+  List<ResultMap> resultMaps = mappedStatement.getResultMaps();
+  int resultMapCount = resultMaps.size();
+  validateResultMapsCount(rsw, resultMapCount);
+
+  while (rsw != null && resultMapCount > resultSetCount) {
+    //存在多个ResultMap循环处理
+    ResultMap resultMap = resultMaps.get(resultSetCount);
+    //处理结果集
+    handleResultSet(rsw, resultMap, multipleResults, null);
+    rsw = getNextResultSet(stmt);
+    cleanUpAfterHandlingResultSet();
+    resultSetCount++;
+  }
 ````
 
 Mybatis可以支持多个`ResultMap`的映射方式，不过实际上一个`ResultMap`已经能满足绝大多数的需求

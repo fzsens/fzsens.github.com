@@ -2,7 +2,7 @@
 layout: post
 title: 架构设计
 date: 2016-12-31
-categories: mybatis
+categories: architecture
 tags: [architecture]
 description: 架构设计的方法论
 ---

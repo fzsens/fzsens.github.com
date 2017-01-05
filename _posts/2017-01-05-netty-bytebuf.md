@@ -9,7 +9,7 @@ description: 介绍Netty ByteBuf设计
 
 > 关于ByteBuf的部分主要翻译的Netty官方提供的文档
 
-在Java的网络编程体系中，时常会提到一点重要的区别，堵塞式的`IO`，以`Socket`为例是面向`Stream`构建的，而非堵塞式的`NIO`，以`SocketChannel`为代表，则是基于`Buffer`作为基础。两者之间的区别在与，`Stream`类似连接在自来水管道上，只能顺序从`Stream`中读取或者写入数据，并且`Stream`只能是单向的，`InputStream`或者`OutputStream` 两者有严格的区分，必须按照顺序获取流中的所有数据，在需要跳过部分数据的时候，也需要将数据全部读取，再进行额外的处理；而`NIO`模式则是将数据先读/写到`Buffer`中，`Buffer`本身只是一个缓存区，`SocketChannel`是一个双向通道，在进行读写的时候再从`Buffer`中获取想要的数据，并可以通过下表索引来控制获取全部或者部分数据。
+在Java的网络编程体系中，时常会提到一点，堵塞式的`IO`，以`Socket`为例是面向`Stream`构建的，而非堵塞式的`NIO`，以`SocketChannel`为代表，则是基于`Buffer`作为基础。两者之间的区别在与，`Stream`类似连接在自来水管道上，只能顺序从`Stream`中读取或者写入数据，并且`Stream`只能是单向的，`InputStream`或者`OutputStream` 两者有严格的区分，必须按照顺序获取流中的所有数据，在需要跳过部分数据的时候，也需要将数据全部读取，再进行额外的处理；而`NIO`模式则是将数据先读/写到`Buffer`中，`Buffer`本身只是一个缓存区，`SocketChannel`是一个双向通道，在进行读写的时候再从`Buffer`中获取想要的数据，并可以通过下表索引来控制获取全部或者部分数据。
 
 在`NIO`中提供了多种`Buffer`支持，其中使用最多的为`ByteBuffer`，用来表示低级别的二进制和文本消息的数据结构，一个电信的`ByteBuffer`的使用代码如下
 

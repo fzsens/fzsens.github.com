@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Timestamp导致的Oracle索引失效
+title: Timestamp导致Oracle索引失效
 date: 2017-01-07
 categories: database
 tags: [database]

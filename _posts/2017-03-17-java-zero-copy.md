@@ -64,14 +64,37 @@ zero copy就是通过减少无谓的数据拷贝来提高性能。
 如果重新审视一下前面的例子，你会发现第二次和第三次数据拷贝，即内核缓存和用户缓存之间的数据拷贝不是必须的。应用除了将数据做一次缓存并传输到socket buffer并没有做其他的事情，相反数据可以直接从read buffer传输到socket buffer而不需要经过application buffer。使用`transferTo()`方法可以让你做到这一点。
 
 ````java
-public void transferTo(long position, long count, WritableByteChannel target);
+	public void transferTo(long position, long count, WritableByteChannel target);
 ````
 
 `transferTo`方法将数据从文件通道(FileChannel)转移到指定的写入通道(WritableByteChannel）。在内部实现以来底层的操作系统对zero copy的支持；在大多数的*NIX系统，`transferTo()`会转换为`sendfile()`系统调用，它会将数据从一个文件描述转移到另一个文件描述（在C++中为指针）。
 
 ````cpp
-#include <sys/socket.h>
-ssize_t sendfile(int out_fd, int in_fd, off_t *offset, size_t count);
+	#include <sys/socket.h>
+	ssize_t sendfile(int out_fd, int in_fd, off_t *offset, size_t count);
 ````
 
+之前的`file.read()`和`socket.sned()`调用会被替换为单个的`transferTo()`调用
 
+````java
+    FileChannel fc = new FileInputStream(fname).getChannel();
+	// transferTo(position, count, writableChannel);
+    long curnset = fc.transferTo(0, fsize, sc);
+````
+
+Figure-3 展示了transferTo方法调用的数据拷贝过程
+
+![figure-3](../img/_posts_images/figure3.gif)
+
+Figure-4 展示了transferTo方法调用的CPU上下文切换
+
+![figure-4](../img/_posts_images/figure4.gif)
+
+具体步骤如下
+
+1. `transferTo`方法使DMA引擎将文件内容拷贝到read buffer，然后数据在kernel内部拷贝到输出socket关联的缓存
+2. 第三次拷贝是DMA引擎将数据从内核内存的socket buffer中拷贝到传输引擎(网卡)
+
+在这一步，我们把上下文切换次数从4次减少到2次，数据拷贝次数从4次减少到3次（只有一次需要CPU参与），但是这还没有达到我们zero copy的目标。如果底层的网卡支持gather operations，我们可以进一步减少数据在内核中的复制。在Linux kernels 2.4以及之后的版本，socket buffer能够支持这个需求。使用这种方法，不仅可以减少上下文切换，还可以消除需要CPU参与的数据拷贝。在用户端代码不需要进行调整，但是内部实现已经发生了改变。
+
+1. 

@@ -40,11 +40,11 @@ Java使用`java.nio.channels.FileChannel`的`transferTo`和`transferFrom`来实�
 
 Figure 1. 传统的数据拷贝途径
 
-![figure-1](../img/_posts_images/figure1.gif)
+![figure-1](https://github.com/fzsens/fzsens.github.com/blob/master/img/_posts_images/figure1.gif)
 
 Figure 2. CPU上下文切换过程
 
-![figure-2](../img/_posts_images/figure2.gif)
+![figure-2](https://github.com/fzsens/fzsens.github.com/blob/master/img/_posts_images/figure2.gif)
 
 具体步骤如下
 
@@ -84,17 +84,23 @@ zero copy就是通过减少无谓的数据拷贝来提高性能。
 
 Figure-3 展示了transferTo方法调用的数据拷贝过程
 
-![figure-3](../img/_posts_images/figure3.gif)
+![figure-3](https://github.com/fzsens/fzsens.github.com/blob/master/img/_posts_images/figure3.gif)
 
 Figure-4 展示了transferTo方法调用的CPU上下文切换
 
-![figure-4](../img/_posts_images/figure4.gif)
+![figure-4](https://github.com/fzsens/fzsens.github.com/blob/master/img/_posts_images/figure4.gif)
 
 具体步骤如下
 
 1. `transferTo`方法使DMA引擎将文件内容拷贝到read buffer，然后数据在kernel内部拷贝到输出socket关联的缓存
-2. 第三次拷贝是DMA引擎将数据从内核内存的socket buffer中拷贝到传输引擎(网卡)
+2. 第三次拷贝是DMA引擎将数据从内核内存的socket buffer中拷贝到协议引擎(网卡)
 
 在这一步，我们把上下文切换次数从4次减少到2次，数据拷贝次数从4次减少到3次（只有一次需要CPU参与），但是这还没有达到我们zero copy的目标。如果底层的网卡支持gather operations，我们可以进一步减少数据在内核中的复制。在Linux kernels 2.4以及之后的版本，socket buffer能够支持这个需求。使用这种方法，不仅可以减少上下文切换，还可以消除需要CPU参与的数据拷贝。在用户端代码不需要进行调整，但是内部实现已经发生了改变。
 
-1. 
+1. 调用`transferTo()`方法触发DMA引擎将文件内容拷贝到内核缓存中
+2. 数据不会被拷贝到socket buffer，取而代之的是数据在内存缓存中的位置和长度描述符会被添加到socket buffer中。DMA引擎直接将数据从内核缓存中直接传输到协议引擎中。因此整个数据传输的过程都不需要CPU参与了
+
+Figure-5 展示了在调用`transferTo`方法在支持gather opertaitons的环境下的表现
+
+[figure-5](https://github.com/fzsens/fzsens.github.com/blob/master/img/_posts_images/figure5.gif)
+

@@ -40,11 +40,11 @@ Java使用`java.nio.channels.FileChannel`的`transferTo`和`transferFrom`来实�
 
 Figure 1. 传统的数据拷贝途径
 
-![figure-1](https://github.com/fzsens/fzsens.github.com/blob/master/img/_posts_images/figure1.gif)
+![figure-1](/img/_posts_images/figure1.gif)
 
 Figure 2. CPU上下文切换过程
 
-![figure-2](https://github.com/fzsens/fzsens.github.com/blob/master/img/_posts_images/figure2.gif)
+![figure-2](/img/_posts_images/figure2.gif)
 
 具体步骤如下
 
@@ -84,11 +84,11 @@ zero copy就是通过减少无谓的数据拷贝来提高性能。
 
 Figure-3 展示了transferTo方法调用的数据拷贝过程
 
-![figure-3](https://github.com/fzsens/fzsens.github.com/blob/master/img/_posts_images/figure3.gif)
+![figure-3](/img/_posts_images/figure3.gif)
 
 Figure-4 展示了transferTo方法调用的CPU上下文切换
 
-![figure-4](https://github.com/fzsens/fzsens.github.com/blob/master/img/_posts_images/figure4.gif)
+![figure-4](/img/_posts_images/figure4.gif)
 
 具体步骤如下
 
@@ -102,5 +102,5 @@ Figure-4 展示了transferTo方法调用的CPU上下文切换
 
 Figure-5 展示了在调用`transferTo`方法在支持gather opertaitons的环境下的表现
 
-[figure-5](https://github.com/fzsens/fzsens.github.com/blob/master/img/_posts_images/figure5.gif)
+![figure-5](/img/_posts_images/figure5.gif)
 

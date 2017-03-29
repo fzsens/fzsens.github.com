@@ -181,10 +181,9 @@ Y询问时，多数派读得到值已经被修改，Y放弃操作
 
 最终我们给出的一致性方案中，客户端和节点之间通过询问和保证的模式来确保已经确定的值不会被更改，通过多数派写/读的方式来确保数据最新的数据能够被存储和访问。从而保证了分布式一致性，这也是`Paxos`算法的雏形。
 
-
 引用
 
-http://drmingdrmer.github.io/tech/distributed/2015/11/11/paxos-slide.html
-https://ramcloud.stanford.edu/~ongaro/userstudy/paxos.pdf
-https://zhuanlan.zhihu.com/p/23811020
-https://zh.wikipedia.org/wiki/Paxos%E7%AE%97%E6%B3%95
+1. [http://drmingdrmer.github.io/tech/distributed/2015/11/11/paxos-slide.html](http://drmingdrmer.github.io/tech/distributed/2015/11/11/paxos-slide.html)
+2. [https://ramcloud.stanford.edu/~ongaro/userstudy/paxos.pdf](https://ramcloud.stanford.edu/~ongaro/userstudy/paxos.pdf)
+3. [https://zhuanlan.zhihu.com/p/23811020](https://zhuanlan.zhihu.com/p/23811020)
+4. [https://zh.wikipedia.org/wiki/Paxos%E7%AE%97%E6%B3%95](https://zh.wikipedia.org/wiki/Paxos%E7%AE%97%E6%B3%95)

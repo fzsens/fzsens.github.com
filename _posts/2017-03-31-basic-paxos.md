@@ -54,11 +54,11 @@ description: 对基础Paxos算法的解读和推导
 
 这种情况下，显然永远无法形成多数派一致。为了保证活性，我们需要加强协议，首先对于场景2，如果想最终达到一致性，需要增加
 
-	S2.1 如果进程的v不是最终的确定值，那么进程能够多次修改自己的v值
+	S2.1: 如果进程的v不是最终的确定值，那么进程能够多次修改自己的v值
 
 接着继续思考，既然必须修改值才能达成一致，那每一个进程就必须从接受到的消息中选择接受和拒绝的消息？单纯先来后到的策略显然无法满足，因此我们为消息引入ID策略，根据ID策略，来区分各个消息。ID为一个自然数，每一个消息的ID都互补相同，这样可以根据消息ID的大小来选择接受或者拒绝，这里我们不妨选择
 	
-	S2.2 进程接受消息ID更大的值，而拒绝消息ID更小的值。
+	S2.2: 进程接受消息ID更大的值，而拒绝消息ID更小的值。
 
 因为每个消息各不相同，假设有消息ID关系：P1.id > P2.id > P3.id，对于场景2，可能出现
 
@@ -71,7 +71,7 @@ description: 对基础Paxos算法的解读和推导
 
 进程P同时承担着两个功能
 
-	1. 进程主动尝试修改并决定v的值，先确定自己的v值，并向进程集群中的其他进程广播提案，称为 **Proposor**
+	1. 进程主动尝试修改并决定v的值，先确定自己的v值，并向进程集群中的其他进程广播提案，称为 **Proposer**
 	2. 进程被动接受其他进程广播的提案，并确定是决绝(reject)还是接受(accept)提案，称为 **Acceptor**
 
 接着考虑，对于**场景2-2**出现的P2消息早于P1到达的情况，我们首先考虑有几种处理方法
@@ -113,7 +113,7 @@ description: 对基础Paxos算法的解读和推导
 
 既：单纯引入预提案还是无法保证消息在乱序到达时候，可能带来的不一致。在**场景2-2**中体现为：预提案无法保证P2的预提案或者提案会被P1的预提案或者提案阻止接受，从而使P2达成一致性；而P2的预提案和提案又无法住址P1达成一致性。
 
-回顾目前我们的协议中存在两个角色（Acceptor和Proposor），两种消息（Proposal和PreProposal），一个进程完成提案需要经过两个阶段
+回顾目前我们的协议中存在两个角色（Acceptor和Proposer），两种消息（Proposal和PreProposal），一个进程完成提案需要经过两个阶段
 
 预提案阶段：
 
@@ -122,7 +122,7 @@ description: 对基础Paxos算法的解读和推导
 
 提案阶段：
 
-1. Proposor：使用之前预提案中的proposal_id作为Proposal.proposal_id向Acceptor广播提案Proposal
+1. Proposer：使用之前预提案中的proposal_id作为Proposal.proposal_id向Acceptor广播提案Proposal
 2. Acceptor：接收到提案Proposal，判断是否满足a_proposal_id > Proposal.proposal_id 如果是，则拒绝这个提案，否则跟新 a_proposal_id为 proposal_id，并接受Proposal中的v值
 
 我们目前的场景假设都是基于3个进程的集合进行讨论的，其实很容易推广到N个进程，如果P1代表Pi，P2代表Pj，一个v被确定，代表有一个进程的提案被多数派集合接受，因此存在下面的情况：
@@ -152,7 +152,7 @@ Q-i和Q-j之间必然存在不为空的交集 Q-i&j，从中选择一个进程 P
 
 课件步骤1和步骤2没有以来关系，并且完成的事情是一样的，都是向其他各个进程发出消息，等待多数派回复。因此将查询步骤和预提案步骤合并为预提案步骤。
 
-即为Proposor也就是 Pi向其他各个进程发出预提案(假设为全集N)，等待多数派回复(Q-i)，从回复中获取Pj.v，并进入提案阶段；Acceptor也就是 Q-i(这里为了方便表述，选择Pm作为代表)则接收(receive)预提案preproposal，如果可以接受(accept)这个预提案preproposal既 Pi.preproposal，将自己接受(accept)过的提案proposal也就是Pj.proposal，作为返回值回复给询问进程 Pi。
+即为Proposer也就是 Pi向其他各个进程发出预提案(假设为全集N)，等待多数派回复(Q-i)，从回复中获取Pj.v，并进入提案阶段；Acceptor也就是 Q-i(这里为了方便表述，选择Pm作为代表)则接收(receive)预提案preproposal，如果可以接受(accept)这个预提案preproposal既 Pi.preproposal，将自己接受(accept)过的提案proposal也就是Pj.proposal，作为返回值回复给询问进程 Pi。
 
 但是实际上这个时候 Pm可能不只接受到Pi和Pj的preproposal和proposal，甚至不知道最后Pj.proposal最后会不会被通过。为了保险起见，Pm选择回复所有曾经接受(accept)过的proposal，这样虽然效率较低，但是保证不会遗漏。
 
@@ -183,9 +183,9 @@ Q-i集合中的进程都和Pm一样，回复了它们所接受过的提案，把
 
 将CF策略纳入我们的协议中，然后从协议流程中推论出CP1即可完成整个协议流程的推导，目前我们的协议流程为：
 
-阶段一：Proposor向所有的Acceptor广播预提案Preproposal；Acceptor收到Preproposal之后，对比Preproposal.proposal_id和自己的a_proposal_id，如果Preproposal.proposal_id > a_proposal_id，则将a_proposal_id修改为Preproposal.proposal_id，并将自己之前所有接受(accept)过的所有提案proposal，作为返回值回复给Proposor，如果未接受过提案则返回null；如果Preproposal.proposal_id < a_proposal_id，则直接忽略请求
+阶段一：Proposer向所有的Acceptor广播预提案Preproposal；Acceptor收到Preproposal之后，对比Preproposal.proposal_id和自己的a_proposal_id，如果Preproposal.proposal_id > a_proposal_id，则将a_proposal_id修改为Preproposal.proposal_id，并将自己之前所有接受(accept)过的所有提案proposal，作为返回值回复给Proposer，如果未接受过提案则返回null；如果Preproposal.proposal_id < a_proposal_id，则直接忽略请求
 
-阶段二：Proposor接受到多数派进程的回复，从回复中选择提案ID最大的提案中的值，作为自己提交Proposal的值，如果为null，则任意选择一个值，然后向所有的Acceptor广播自己的提案，和阶段一的Preproposal共用相同的proposal_id；Acceptor收到提案之后，判断proposal.proposal_id >= a_proposal_id，如果成立则接受提案值，并更新a_proposal_id = proposal.proposal_id，否则直接忽略请求。
+阶段二：Proposer接受到多数派进程的回复，从回复中选择提案ID最大的提案中的值，作为自己提交Proposal的值，如果为null，则任意选择一个值，然后向所有的Acceptor广播自己的提案，和阶段一的Preproposal共用相同的proposal_id；Acceptor收到提案之后，判断proposal.proposal_id >= a_proposal_id，如果成立则接受提案值，并更新a_proposal_id = proposal.proposal_id，否则直接忽略请求。
 
 > 实际上null值也可以当作是一个普通的值
 
@@ -208,10 +208,41 @@ Q-i集合中的进程都和Pm一样，回复了它们所接受过的提案，把
 
 CP1约束了，如果一个Pj.proposal被确定，则不可能存在Pi.proposal.proposal_id > Pj.proposal.proposal_id，并且 Pi.proposal.v ≠ Pj.proposal.v，同理可得，如果Pj.proposal被通过，那么必然不存在Po被确定，并且 Po.proposal.proposal_id < Pj.proposal.proposal_id，并且 Po.proposal.v ≠ Pj.proposal.v，将CP1引用在Po上即可推出。
 
-再优化一下协议流程中的阶段一，Acceptor在接受(accept)，并返回提案值的时候，将所有之前接受过的proposal都返回给了询问的Proposor。而Proposor在最终选择MaxProposal(K-i)的时候实际上是选择最大值，因此Acceptor只需要返回曾经接受过的proposal中proposal_id最大的proposal即可。最终的协议流程为：
+再优化一下协议流程中的阶段一，Acceptor在接受(accept)，并返回提案值的时候，将所有之前接受过的proposal都返回给了询问的Proposer。而Proposer在最终选择MaxProposal(K-i)的时候实际上是选择最大值，因此Acceptor只需要返回曾经接受过的proposal中proposal_id最大的proposal即可。最终的协议流程为：
 
-阶段一：Proposor向所有的Acceptor广播预提案Preproposal；Acceptor收到Preproposal之后，对比Preproposal.proposal_id和自己的a_proposal_id，如果Preproposal.proposal_id > a_proposal_id，则将a_proposal_id修改为Preproposal.proposal_id，并将自己之前所有**接受(accept)过的所有提案proposal中proposal_id最大的proposal**，作为返回值回复给Proposor，如果未接受过提案则返回null；如果Preproposal.proposal_id < a_proposal_id，则直接忽略请求
+阶段一：Proposer向所有的Acceptor广播预提案Preproposal；Acceptor收到Preproposal之后，对比Preproposal.proposal_id和自己的a_proposal_id，如果Preproposal.proposal_id > a_proposal_id，则将a_proposal_id修改为Preproposal.proposal_id，并将自己之前所有**接受(accept)过的所有提案proposal中proposal_id最大的proposal**，作为返回值回复给Proposer，如果未接受过提案则返回null；如果Preproposal.proposal_id < a_proposal_id，则直接忽略请求
 
-阶段二：Proposor接受到多数派进程的回复，从回复中选择提案ID最大的提案中的值，作为自己提交Proposal的值，如果为null，则任意选择一个值，然后向所有的Acceptor广播自己的提案，和阶段一的Preproposal共用相同的proposal_id；Acceptor收到提案之后，判断proposal.proposal_id >= a_proposal_id，如果成立则接受提案值，并更新a_proposal_id = proposal.proposal_id，否则直接忽略请求。
+阶段二：Proposer接受到多数派进程的回复，从回复中选择提案ID最大的提案中的值，作为自己提交Proposal的值，如果为null，则任意选择一个值，然后向所有的Acceptor广播自己的提案，和阶段一的Preproposal共用相同的proposal_id；Acceptor收到提案之后，判断proposal.proposal_id >= a_proposal_id，如果成立则接受提案值，并更新a_proposal_id = proposal.proposal_id，否则直接忽略请求。
 
 这就是`Paxos算法`的协议流程。
+
+### 原论文解读和参考资料
+
+对于`Paxos算法`论文的的证明和说明，网上的资料浩如烟海，写得也都非常详细，我就不再赘述，只把一些要点做归纳总结
+
+[Paxos Made Simple译文](http://dsdoc.net/paxosmadesimple/index.html)
+注：《Paxos Made Simple》的论文原文阅读并不困难，推荐这篇译文主要可以结合最后的译者注，对照自己对文章的理解，其中也补全了部分原文中没有说明的隐喻。
+[Paxos算法1-算法形成理论](http://blog.csdn.net/chen77716/article/details/6166675#reply)
+注：
+1. 这篇文章是目前我读过对Paxos算法介绍最为细致的中文资料，特别是对推论过程中的逐步分析，可见作者的功力。
+2. 其中对于P2c的推论出P2的部分，需要多看几遍，和原文一样，这是一个从抽象反推出具体的过程，使用的是反向的推理。而非一般的从具体到抽象的归纳和总结。
+3. 上一个章节的线性推理中，则是先假设了这样一个P2c过程的存在，通过存在来进行证明。最后论证P2c能满足P2，两个对比起来看可能会容易理解一些。
+4. 使用的数学归纳法，归纳法第一步：m成立 => m+1成立，可以推广到 [m+1,n-1)成立。第二步在证明[m,n-1)成立的基础上，推论出n的成立。使用还是多数派必然存在交集的原理。
+5. P1并不完备，既P1存在无法解决的矛盾-接受了第一个提案之后，如何处理后续收到的提案；P2c在推论出P2的时候，同时通过协议流程对接受和拒绝的描述，补全P1完备性。
+
+[Paxos算法2-算法过程](http://blog.csdn.net/chen77716/article/details/6170235#reply)
+注：
+1. 这一篇和上一篇属于同一个作者的同一个系列，通过对Paxos算法过程的讨论，引出实现中可能会遇到的问题
+2. 其中关于Paxos和Master-Slave/Master-Master的说明，实际上Paxos算法并不需要一个Leader/Master，选择Leader的考虑是为了减少可能出现的活锁(多个proposer在prepare阶段相互覆盖proposal_id)，就算是出现多个Leader，Paxos算法也可以保证一致性。而M-S需要Master是一个固定的角色，[《多副本和分布式一致性》](http://qiongsong.com/consensus/2017/03/29/replications-and-consensus/ "多副本和分布式一致性")有对应的描述，可以对比一下。
+3. 关于Paxos和两阶段提交，Paxos的两个阶段和2PC有异曲同工之妙，每一个单独的Proposer和Acceptor的交互都可以看作是一次2PC，但是Paxos重点突破的是2PC的单点问题，2PC如果作为接入点的协调者出现了异常整个应用是不可用的。而Paxos，每一个进程都是平等的，都可以承担接入点的角色，可以在(N-1)/2个节点出现故障的时候保证一致性。
+4. 关于Paxos和3PC的区别，文章中没有描述，实际上3PC是对2PC的一个改进，通过引入协调者选举、超时和precommit作为中间状态来解决2PC的单点故障和堵塞问题。但是3PC可能会引起网络分区问题，假设一个网络被分割成为两个彼此无法进行通信的网络，A部分都受到了precommit，B部分都没有，可能会选择出两个协调者，A部分的协调者决定提交precommit，而B分别的协调者没有提交这个precommit，造成数据不一致。也有改进的3PC，也是通过多数派原则来尝试解决3PC的问题[《Increasing the Resilience of Distributed and Replicated Database Systems》](http://people.csail.mit.edu/idish/ftp/JCSS.pdf)。
+
+[Paxos理论介绍(1): 朴素Paxos算法理论推导与证明](https://zhuanlan.zhihu.com/p/21438357?refer=lynncui)
+注：这是微信的PhxPaxos组件的开发者介绍Basic Paxos的文章，可以通过给出的表格来加深对选举过程的理解。
+
+[Paxos算法3-实现探讨 ](http://blog.csdn.net/chen77716/article/details/6172392)
+注：这部分，重点讨论了Paxos实现时候，主要角色需要完成的功能可微信的[《微信自研生产级paxos类库PhxPaxos实现原理介绍》](http://mp.weixin.qq.com/s?__biz=MzI4NDMyNTU2Mw==&mid=2247483695&idx=1&sn=91ea422913fc62579e020e941d1d059e#rd)可以互为补充。
+
+### 总结
+
+以上为最近对Basic Paxos算法的理解，Paxos算法的核心原理简单，主要是两个`Majority`之间必然存在交集，通过这个交集可以在多个2PC之间建立联系从而达成一致性。但是从核心原理推导出具体的协议策略却需要较长的推导。从Basic Paxos到具体能够在生产环境中工程化使用又有更多需要优化和处理的异常。但是作为目前分布式一致性理论的代表作，无疑是值得花时间去研究和理解的。

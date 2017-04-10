@@ -15,7 +15,7 @@ description: "時間才是最昂貴的奢侈品"
         </h3>
         {% endif %}
         <div class="post-content-preview">
-            {{ post.content | strip_html | truncate:150 }}
+            {{ post.content | strip_html | truncate:55 }}
         </div>
     </a>
     <p class="post-meta">Posted by {% if post.author %}{{ post.author }}{% else %}{{ site.title }}{% endif %} on {{ post.date | date: "%B %-d, %Y" }}</p>

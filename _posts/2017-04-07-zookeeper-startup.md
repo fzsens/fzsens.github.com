@@ -1,3 +1,12 @@
+---
+layout: post
+title: ZooKeeper Standalone 模式启动分析
+date: 2017-03-31
+categories: zookeeper
+tags: [zookeeper]
+description: 对单机模式下zookeeper启动进行代码分析
+---
+
 ### Zookeeper服务启动
 
 ZooKeeper是一个典型的分布式数据一致性的解决方案，分布式应用程序可以基于它实现诸如数据发布/订阅、负债均衡、命名服务、分布式协调/通知、集群管理、Master选举、分布式锁和分布式队列等功能。
@@ -434,11 +443,11 @@ public synchronized void startup() {
     }
     // session追踪，处理session超时等
     startSessionTracker();
-    //请求处理器
+    // 请求处理器
     setupRequestProcessors();
     // 注册jmx，可以通过jmx获取zkDatabase的一些信息
     registerJMX();
-
+    // 修改运行状态
     state = State.RUNNING;
     notifyAll();
 }
@@ -460,3 +469,222 @@ protected void setupRequestProcessors() {
     ((PrepRequestProcessor) firstProcessor).start();
 }
 ````
+zk对于request的处理，使用调用链模式，`PrepRequestProcessor`、`SyncRequestProcessor`、`FinalRequestProcessor`构成调用链，并依次对request进行处理。
+
+首先是`PrepRequestProcessor`，主要完成的工作是用Request构建待处理的Transaction。
+
+````java
+
+while (true) {
+   // 循环处理 submitted Requests中的数据
+    Request request = submittedRequests.take();
+    long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
+    if (request.type == OpCode.ping) {
+      traceMask = ZooTrace.CLIENT_PING_TRACE_MASK;
+    }
+    if (LOG.isTraceEnabled()) {
+      ZooTrace.logRequest(LOG, traceMask, 'P', request, "");
+    }
+    if (Request.requestOfDeath == request) {
+      break;
+    }
+    pRequest(request);
+}
+
+protected void pRequest(Request request) throws RequestProcessorException {
+  // LOG.info("Prep>>> cxid = " + request.cxid + " type = " +
+  // request.type + " id = 0x" + Long.toHexString(request.sessionId));
+  request.hdr = null;
+  request.txn = null;
+  try {
+   switch (request.type) {
+     case OpCode.create:
+       // 请求
+       CreateRequest createRequest = new CreateRequest();
+       pRequest2Txn(request.type, zks.getNextZxid(), request, createRequest, true);
+       break;
+       // 略
+   }
+  }
+  request.zxid = zks.getZxid();
+  // 下一个 processor 进行处理
+  nextProcessor.processRequest(request);
+}
+
+protected void pRequest2Txn(int type, long zxid, Request request, Record record, boolean deserialize) throws KeeperException, IOException, RequestProcessorException {
+      request.hdr = new TxnHeader(request.sessionId, request.cxid, zxid,
+                                  zks.getTime(), type);
+      switch (type) {
+        case OpCode.create:
+          // 检查session是否有效
+          zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
+          CreateRequest createRequest = (CreateRequest)record;
+          if(deserialize)
+            // 将request反序列化为 createRequest
+            ByteBufferInputStream.byteBuffer2Record(request.request, createRequest);
+          //需要创建的 path
+          String path = createRequest.getPath();
+          int lastSlash = path.lastIndexOf('/');
+          if (lastSlash == -1 || path.indexOf('\0') != -1 || failCreate) {
+            LOG.info("Invalid path " + path + " with session 0x" +
+                     Long.toHexString(request.sessionId));
+            throw new KeeperException.BadArgumentsException(path);
+          }
+          //权限控制
+          List<ACL> listACL = removeDuplicates(createRequest.getAcl());
+          if (!fixupACL(request.authInfo, listACL)) {
+            throw new KeeperException.InvalidACLException(path);
+          }
+
+          //父亲节点
+          String parentPath = path.substring(0, lastSlash);
+          ChangeRecord parentRecord = getRecordForPath(parentPath);
+
+          checkACL(zks, parentRecord.acl, ZooDefs.Perms.CREATE,
+                   request.authInfo);
+          int parentCVersion = parentRecord.stat.getCversion();
+          CreateMode createMode =
+            CreateMode.fromFlag(createRequest.getFlags());
+          if (createMode.isSequential()) {
+            // 处理seq节点
+            path = path + String.format(Locale.ENGLISH, "%010d", parentCVersion);
+          }
+          // check
+          validatePath(path, request.sessionId);
+          try {
+            //已经存在，则不允许重复创建
+            if (getRecordForPath(path) != null) {
+              throw new KeeperException.NodeExistsException(path);
+            }
+          } catch (KeeperException.NoNodeException e) {
+            // ignore this one
+          }
+          //父亲节点不允许创建子节点
+          boolean ephemeralParent = parentRecord.stat.getEphemeralOwner() != 0;
+          if (ephemeralParent) {
+            throw new KeeperException.NoChildrenForEphemeralsException(path);
+          }
+          int newCversion = parentRecord.stat.getCversion()+1;
+          //构造request中的transaction
+          request.txn = new CreateTxn(path, createRequest.getData(),
+                                      listACL,
+                                      createMode.isEphemeral(), newCversion);
+          StatPersisted s = new StatPersisted();
+          if (createMode.isEphemeral()) {
+            //临时节点
+            s.setEphemeralOwner(request.sessionId);
+          }
+          // parent 的修改和 children节点的修改，共享一个zxid
+          parentRecord = parentRecord.duplicate(request.hdr.getZxid());
+          parentRecord.childCount++;
+          parentRecord.stat.setCversion(newCversion);
+          // 添加到待处理的 change record中，继续后续的processor
+          addChangeRecord(parentRecord);
+          addChangeRecord(new ChangeRecord(request.hdr.getZxid(), path, s,
+                                           0, listACL));
+          break;
+          // 略
+````
+代码较长，摘出来的代码中主要以创建节点为例子，最终讲request构建成`ChangeRecord`并调用`nextProcessor.processRequest()`将request写入`SyncRequestProcessor`的待处理请求队列`queuedRequests`中，继续剩下的工作。
+
+````java
+int logCount = 0;
+// we do this in an attempt to ensure that not all of the servers
+// in the ensemble take a snapshot at the same time
+// 避免所有的servers同时进行快照转储
+setRandRoll(r.nextInt(snapCount/2));
+while (true) {
+  Request si = null;
+  if (toFlush.isEmpty()) {
+    si = queuedRequests.take();
+  } else {
+    si = queuedRequests.poll();
+    if (si == null) {
+      flush(toFlush);
+      continue;
+    }
+  }
+  if (si == requestOfDeath) {
+    break;
+  }
+  if (si != null) {
+    // track the number of records written to the log
+    if (zks.getZKDatabase().append(si)) {
+      // 添加成功
+      logCount++;
+      // 是否要进行 snapshot
+      if (logCount > (snapCount / 2 + randRoll)) {
+        randRoll = r.nextInt(snapCount/2);
+        // roll the log
+        zks.getZKDatabase().rollLog();
+        // take a snapshot
+        if (snapInProcess != null && snapInProcess.isAlive()) {
+          LOG.warn("Too busy to snap, skipping");
+        } else {
+          snapInProcess = new ZooKeeperThread("Snapshot Thread") {
+            public void run() {
+              try {
+                zks.takeSnapshot();
+              } catch(Exception e) {
+                LOG.warn("Unexpected exception", e);
+              }
+            }
+          };
+          // create snapshot
+          snapInProcess.start();
+        }
+        logCount = 0;
+      }
+    } else if (toFlush.isEmpty()) {
+      // optimization for read heavy workloads
+      // iff this is a read, and there are no pending
+      // flushes (writes), then just pass this to the next
+      // processor
+      // 对于读请求，直接转发给下一个Processor进行处理
+      if (nextProcessor != null) {
+        nextProcessor.processRequest(si);
+        if (nextProcessor instanceof Flushable) {
+          ((Flushable)nextProcessor).flush();
+        }
+      }
+      continue;
+    }
+    // 批量刷盘
+    toFlush.add(si);
+    if (toFlush.size() > 1000) {
+      flush(toFlush);
+    }
+  }
+````
+
+`SyncRequestProcessor`的功能相对简单，主要是讲Request追加到`TxnLog`中，并决定是否对当前的ZkDatabase进行快照转储。
+
+最后在`FinalRequestProcessor`中，讲Request真正应用到`DataTree`中，并根据请求的内容，构建出返回Response，通过`ServerCnxn`，返回给请求客户端。
+
+````java
+// 读取值
+lastOp = "GETD";
+GetDataRequest getDataRequest = new GetDataRequest();
+ByteBufferInputStream.byteBuffer2Record(request.request,
+                                        getDataRequest);
+// 从DataTree中读取DataNode
+DataNode n = zks.getZKDatabase().getNode(getDataRequest.getPath());
+if (n == null) {
+  throw new KeeperException.NoNodeException();
+}
+Long aclL;
+synchronized(n) {
+  aclL = n.acl;
+}
+PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().convertLong(aclL),
+                              ZooDefs.Perms.READ,
+                              request.authInfo);
+// 请求路径对应的状态
+Stat stat = new Stat();
+// 获取请求路径的内容
+byte b[] = zks.getZKDatabase().getData(getDataRequest.getPath(), stat,
+                                       getDataRequest.getWatch() ? cnxn : null);
+rsp = new GetDataResponse(b, stat);
+````
+
+到这边就完成了RequestProcessor调用链的整个处理周期，可以看出，zk首先对请求进行分类，再写入到事务日志中，最后才进行正常的读写`DataTree`处理。只有完成这三个步骤之后，一个请求的生命周期才算完成。代码方面，三个处理器之间使用有序队列来进行交互，可以有地减少代码耦合；调用链模式的引入，也有利于后续的拓展。

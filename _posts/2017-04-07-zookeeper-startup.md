@@ -331,7 +331,132 @@ public void startdata()
         loadData();
     }
 }
-
-
 ````
 
+````java
+// ZkDataBase
+/**
+ * 从磁盘中还原数据到DataTree
+ */
+public long loadDataBase() throws IOException {
+    // 每次执行一个Transaction之后，就放入commited log中，
+    // 便于在其他的Follower中快速恢复
+    PlayBackListener listener=new PlayBackListener(){
+        public void onTxnLoaded(TxnHeader hdr,Record txn){
+            Request r = new Request(null, 0, hdr.getCxid(),hdr.getType(),
+                    null, null);
+            r.txn = txn;
+            r.hdr = hdr;
+            r.zxid = hdr.getZxid();
+            addCommittedProposal(r);
+        }
+    };
+    
+    long zxid = snapLog.restore(dataTree,sessionsWithTimeouts,listener);
+    initialized = true;
+    return zxid;
+}
+````
+这边创建了一个回调监听`PlayBackListener`,通过这个回调监听，可以向`ZkDatabase`中的commitedLog中追加Transaction记录，这样就可以将在本Server中回放的Transaction快速复制到其他的Follower机器上快速恢复。
+
+而具体恢复数据的方法在`FileTxnSnapLog`中
+
+````java
+/**
+ * 从snapshot和transaction log中恢复zk server的数据
+ * 这个方法返回恢复后最高的zxid
+ */
+public long restore(DataTree dt, Map<Long, Integer> sessions, 
+        PlayBackListener listener) throws IOException {
+    // 将snapshot写入到data tree中
+    snapLog.deserialize(dt, sessions);
+    // Transaction Log
+    FileTxnLog txnLog = new FileTxnLog(dataDir);
+    // 从最后一个处理过的Transaction Record开始继续处理
+    TxnIterator itr = txnLog.read(dt.lastProcessedZxid+1);
+    // 已经处理过的Transaction中编号最大的
+    long highestZxid = dt.lastProcessedZxid;
+    TxnHeader hdr;
+    try {
+        while (true) {
+            // iterator points to 
+            // the first valid txn when initialized
+            hdr = itr.getHeader();
+            if (hdr == null) {
+                //empty logs
+                // txnLog 已经没有更多的 transaction
+                return dt.lastProcessedZxid;
+            }
+            if (hdr.getZxid() < highestZxid && highestZxid != 0) {
+                LOG.error("{}(higestZxid) > {}(next log) for type {}",
+                        new Object[] { highestZxid, hdr.getZxid(),
+                                hdr.getType() });
+            } else {
+                highestZxid = hdr.getZxid();
+            }
+            try {
+                // 在Data Tree 中执行Transaction 恢复
+                processTransaction(hdr,dt,sessions, itr.getTxn());
+            } catch(KeeperException.NoNodeException e) {
+               throw new IOException("Failed to process transaction type: " +
+                     hdr.getType() + " error: " + e.getMessage(), e);
+            }
+            listener.onTxnLoaded(hdr, itr.getTxn());
+            if (!itr.next()) 
+                break;
+        }
+    } finally {
+        if (itr != null) {
+            itr.close();
+        }
+    }
+	// 返回最大的zxid
+    return highestZxid;
+}
+````
+主要有两个步骤：
+
+1. 将snapshot直接反序列化到DataTree中，并获取当前DataTree中最高的zxid
+2. 通过zxid从TxnLog中找到在zxid之后，记录到TxnLog中的事务，并将这些事务取出重新执行。
+
+zk对于数据恢复的设计非常巧妙。为了保证zk在进行snapshot操作的时候能够持续服务，就必须使得zk在snapshot期间依然可以写入数据。而在恢复阶段，为了保证数据的完整性，则必须处理在快照之后，补充写入snapshot之后的发生事务。因此必须要有一个标识能够识别那些是snapshot之前，那些是snapshot之后的事务。在这边zk巧妙利用了zxid的全局唯一，以及全序性特征。在恢复snapshot到DataTree之后，就可以获取到最大的zxid，lastZxid，这个无疑是snapshot中最后一个执行的事务的zxid，通过这个zxid，找到从所有的txnlog中搜索zxid大于等于这个lastid的事务，并将事务重新在DataTree中写入，即可保证数据的完整性。从这边也可以看出，zxid在整个zk服务中的重要地位。
+
+#### 启动处理器
+
+````java
+// ZooKeeperServer
+/**
+ * 启动zk
+ */
+public synchronized void startup() {
+    if (sessionTracker == null) {
+        createSessionTracker();
+    }
+    // session追踪，处理session超时等
+    startSessionTracker();
+    //请求处理器
+    setupRequestProcessors();
+    // 注册jmx，可以通过jmx获取zkDatabase的一些信息
+    registerJMX();
+
+    state = State.RUNNING;
+    notifyAll();
+}
+````
+整个启动流程的最后一步，首先创建SessionTracker，用于周期性检查session的过期情况。在实现类SessionTrackerImpl内部实际上维护另一个HashMap，对连接到本机的client sesison进行定期检查。
+
+关键步骤是初始化和执行请求处理器
+
+````java
+/**
+ * 设置请求处理器
+ */
+protected void setupRequestProcessors() {
+    RequestProcessor finalProcessor = new FinalRequestProcessor(this);
+    RequestProcessor syncProcessor = new SyncRequestProcessor(this,
+            finalProcessor);
+    ((SyncRequestProcessor) syncProcessor).start();
+    firstProcessor = new PrepRequestProcessor(this, syncProcessor);
+    ((PrepRequestProcessor) firstProcessor).start();
+}
+````

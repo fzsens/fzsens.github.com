@@ -5,3 +5,5 @@ Canal Server模拟MySQL的Slave服务器，dump MySQL的binlog并解析成为事
 2. 事件驱动业务
 3. 数据库同步
 
+##### 实例
+SpringCanalInstanceGenerator通过Spring来对CanalInstance进行初始化。

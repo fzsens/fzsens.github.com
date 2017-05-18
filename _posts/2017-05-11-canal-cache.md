@@ -380,3 +380,4 @@ public class MdmCacheServer extends Thread {
 }
 ````
 
+从Canal中订阅并获取Message之后，解析为程序可以识别的事件，便可以灵活进行数据的消费。

@@ -189,146 +189,146 @@ ReloadingPropertyPlaceholderConfigurer是IReloadablePropertiesListener的实现�
 `ReloadingPropertyPlaceholderConfigurer`作为`BeanFactoryPostProcessor`，在进行placeHolder进行`parseStringValue`调用的时候，完成对placeHolder和Spring Bean的绑定
 
 ````java
-	/**
-	 * BeanDefinition解析获取值
-	 */
-	protected String parseStringValue(String strVal, Properties props, Set visitedPlaceholders)
-			throws BeanDefinitionStoreException {
+/**
+* BeanDefinition解析获取值
+*/
+protected String parseStringValue(String strVal, Properties props, Set visitedPlaceholders)
+  throws BeanDefinitionStoreException {
 
-		//对应本次解析的Spring Bean
-		DynamicProperty dynamic = null;
+  //对应本次解析的Spring Bean
+  DynamicProperty dynamic = null;
 
-		// replace reloading prefix and suffix by "normal" prefix and suffix.
-		// remember all the "dynamic" placeholders encountered.
-		StringBuffer buf = new StringBuffer(strVal);
-		int startIndex = strVal.indexOf(this.reloadingPlaceholderPrefix);
-		while (startIndex != -1) {
-			int endIndex = buf.toString().indexOf(this.reloadingPlaceholderSuffix,
-					startIndex + this.reloadingPlaceholderPrefix.length());
-			if (endIndex != -1) {
-				if (currentBeanName != null && currentPropertyName != null) {
-					String placeholder = buf.substring(startIndex + this.placeholderPrefix.length(), endIndex);
-					placeholder = getPlaceholder(placeholder);
-					if (dynamic == null)
-						dynamic = getDynamic(currentBeanName, currentPropertyName, strVal);
-                    // 添加以来关系，内部通过HashMap placeholderToDynamics 维护关系
-					addDependency(dynamic, placeholder);
-				} else {
-					logger.warn("dynamic property outside bean property value - ignored: " + strVal);
-				}
-				buf.replace(endIndex, endIndex + this.reloadingPlaceholderSuffix.length(), placeholderSuffix);
-				buf.replace(startIndex, startIndex + this.reloadingPlaceholderPrefix.length(), placeholderPrefix);
-				startIndex = endIndex - this.reloadingPlaceholderPrefix.length() + this.placeholderPrefix.length()
-						+ this.placeholderSuffix.length();
-				startIndex = strVal.indexOf(this.reloadingPlaceholderPrefix, startIndex);
-			} else
-				startIndex = -1;
-		}
-		// then, business as usual. no recursive reloading placeholders please.
-		return super.parseStringValue(buf.toString(), props, visitedPlaceholders);
-	}
+  // replace reloading prefix and suffix by "normal" prefix and suffix.
+  // remember all the "dynamic" placeholders encountered.
+  StringBuffer buf = new StringBuffer(strVal);
+  int startIndex = strVal.indexOf(this.reloadingPlaceholderPrefix);
+  while (startIndex != -1) {
+    int endIndex = buf.toString().indexOf(this.reloadingPlaceholderSuffix,
+                                          startIndex + this.reloadingPlaceholderPrefix.length());
+    if (endIndex != -1) {
+      if (currentBeanName != null && currentPropertyName != null) {
+        String placeholder = buf.substring(startIndex + this.placeholderPrefix.length(), endIndex);
+        placeholder = getPlaceholder(placeholder);
+        if (dynamic == null)
+          dynamic = getDynamic(currentBeanName, currentPropertyName, strVal);
+        // 添加以来关系，内部通过HashMap placeholderToDynamics 维护关系
+        addDependency(dynamic, placeholder);
+      } else {
+        logger.warn("dynamic property outside bean property value - ignored: " + strVal);
+      }
+      buf.replace(endIndex, endIndex + this.reloadingPlaceholderSuffix.length(), placeholderSuffix);
+      buf.replace(startIndex, startIndex + this.reloadingPlaceholderPrefix.length(), placeholderPrefix);
+      startIndex = endIndex - this.reloadingPlaceholderPrefix.length() + this.placeholderPrefix.length()
+        + this.placeholderSuffix.length();
+      startIndex = strVal.indexOf(this.reloadingPlaceholderPrefix, startIndex);
+    } else
+      startIndex = -1;
+  }
+  // then, business as usual. no recursive reloading placeholders please.
+  return super.parseStringValue(buf.toString(), props, visitedPlaceholders);
+}
 ````
 
 而本身`ReloadingPropertyPlaceholderConfigurer`作为一个`ReloadablePropertiesListener`的实现类，当`ReloadablePropertiesBase`进行properties设置的时候，利用观察者模式，会通知`ReloadingPropertyPlaceholderConfigurer`，并调用其`propertiesReloaded`方法。
 
 ````java
-	/**
-	 * 监听时间出发重新加载
-	 */
-	public void propertiesReloaded(PropertiesReloadedEvent event) {
-		Properties oldProperties = lastMergedProperties;
-		try {
-			Properties newProperties = mergeProperties();
-            //确定发生变化的Properties
-			Set<String> placeholders = placeholderToDynamics.keySet();
-			Set<DynamicProperty> allDynamics = new HashSet<DynamicProperty>();
-			for (String placeholder : placeholders) {
-				String newValue = newProperties.getProperty(placeholder);
-				String oldValue = oldProperties.getProperty(placeholder);
-				if (newValue != null && !newValue.equals(oldValue) || newValue == null && oldValue != null) {
-					if (logger.isInfoEnabled())
-						logger.info("Property changed detected: " + placeholder
-								+ (newValue != null ? "=" + newValue : " removed"));
-					List<DynamicProperty> affectedDynamics = placeholderToDynamics.get(placeholder);
-					allDynamics.addAll(affectedDynamics);
-				}
-			}
-			// sort affected bean properties by bean name and say hello.
-			Map<String, List<DynamicProperty>> dynamicsByBeanName = new HashMap<String, List<DynamicProperty>>();
-			Map<String, Object> beanByBeanName = new HashMap<String, Object>();
-			for (DynamicProperty dynamic : allDynamics) {
-				String beanName = dynamic.getBeanName();
-				List<DynamicProperty> l = dynamicsByBeanName.get(beanName);
-				if (l == null) {
-					dynamicsByBeanName.put(beanName, (l = new ArrayList<DynamicProperty>()));
-					Object bean = null;
-					try {
-						// 获取收到影响的bean
-						bean = applicationContext.getBean(beanName);
-						beanByBeanName.put(beanName, bean);
-					} catch (BeansException e) {
-						// keep dynamicsByBeanName list, warn only once.
-						logger.error("Error obtaining bean " + beanName, e);
-					}
-					try {
-                        // 前置切面
-						if (bean instanceof ReconfigurationAware)
-							((ReconfigurationAware) bean).beforeReconfiguration(); // hello!
-					} catch (Exception e) {
-						logger.error("Error calling beforeReconfiguration on " + beanName, e);
-					}
-				}
-				l.add(dynamic);
-			}
-			// for all affected beans...
-			Collection<String> beanNames = dynamicsByBeanName.keySet();
-			for (String beanName : beanNames) {
-				Object bean = beanByBeanName.get(beanName);
-				if (bean == null) // problems obtaining bean, earlier
-					continue;
-                // Spring BeanWrapper
-				BeanWrapper beanWrapper = new BeanWrapperImpl(bean);
-				// for all affected properties...
-				List<DynamicProperty> dynamics = dynamicsByBeanName.get(beanName);
-				for (DynamicProperty dynamic : dynamics) {
-					String propertyName = dynamic.getPropertyName();
-					String unparsedValue = dynamic.getUnparsedValue();
+/**
+* 监听时间出发重新加载
+*/
+public void propertiesReloaded(PropertiesReloadedEvent event) {
+  Properties oldProperties = lastMergedProperties;
+  try {
+    Properties newProperties = mergeProperties();
+    //确定发生变化的Properties
+    Set<String> placeholders = placeholderToDynamics.keySet();
+    Set<DynamicProperty> allDynamics = new HashSet<DynamicProperty>();
+    for (String placeholder : placeholders) {
+      String newValue = newProperties.getProperty(placeholder);
+      String oldValue = oldProperties.getProperty(placeholder);
+      if (newValue != null && !newValue.equals(oldValue) || newValue == null && oldValue != null) {
+        if (logger.isInfoEnabled())
+          logger.info("Property changed detected: " + placeholder
+                      + (newValue != null ? "=" + newValue : " removed"));
+        List<DynamicProperty> affectedDynamics = placeholderToDynamics.get(placeholder);
+        allDynamics.addAll(affectedDynamics);
+      }
+    }
+    // sort affected bean properties by bean name and say hello.
+    Map<String, List<DynamicProperty>> dynamicsByBeanName = new HashMap<String, List<DynamicProperty>>();
+    Map<String, Object> beanByBeanName = new HashMap<String, Object>();
+    for (DynamicProperty dynamic : allDynamics) {
+      String beanName = dynamic.getBeanName();
+      List<DynamicProperty> l = dynamicsByBeanName.get(beanName);
+      if (l == null) {
+        dynamicsByBeanName.put(beanName, (l = new ArrayList<DynamicProperty>()));
+        Object bean = null;
+        try {
+          // 获取收到影响的bean
+          bean = applicationContext.getBean(beanName);
+          beanByBeanName.put(beanName, bean);
+        } catch (BeansException e) {
+          // keep dynamicsByBeanName list, warn only once.
+          logger.error("Error obtaining bean " + beanName, e);
+        }
+        try {
+          // 前置切面
+          if (bean instanceof ReconfigurationAware)
+            ((ReconfigurationAware) bean).beforeReconfiguration(); // hello!
+        } catch (Exception e) {
+          logger.error("Error calling beforeReconfiguration on " + beanName, e);
+        }
+      }
+      l.add(dynamic);
+    }
+    // for all affected beans...
+    Collection<String> beanNames = dynamicsByBeanName.keySet();
+    for (String beanName : beanNames) {
+      Object bean = beanByBeanName.get(beanName);
+      if (bean == null) // problems obtaining bean, earlier
+        continue;
+      // Spring BeanWrapper
+      BeanWrapper beanWrapper = new BeanWrapperImpl(bean);
+      // for all affected properties...
+      List<DynamicProperty> dynamics = dynamicsByBeanName.get(beanName);
+      for (DynamicProperty dynamic : dynamics) {
+        String propertyName = dynamic.getPropertyName();
+        String unparsedValue = dynamic.getUnparsedValue();
 
-					// obtain an updated value, including dependencies
-					String newValue;
-					removeDynamic(dynamic);
-					currentBeanName = beanName;
-					currentPropertyName = propertyName;
-					try {
-						newValue = parseStringValue(unparsedValue, newProperties, new HashSet());
-					} finally {
-						currentBeanName = null;
-						currentPropertyName = null;
-					}
-					if (logger.isInfoEnabled())
-						logger.info("Updating property " + beanName + "." + propertyName + " to " + newValue);
-					try {
-                        //赋值
-						beanWrapper.setPropertyValue(propertyName, newValue);
-					} catch (BeansException e) {
-						logger.error("Error setting property " + beanName + "." + propertyName + " to " + newValue, e);
-					}
-				}
-			}
-            // 后置切面
-			for (String beanName : beanNames) {
-				Object bean = beanByBeanName.get(beanName);
-				try {
-					if (bean instanceof ReconfigurationAware)
-						((ReconfigurationAware) bean).afterReconfiguration();
-				} catch (Exception e) {
-					logger.error("Error calling afterReconfiguration on " + beanName, e);
-				}
-			}
-		} catch (IOException e) {
-			logger.error("Error trying to reload properties: " + e.getMessage(), e);
-		}
-	}
+        // obtain an updated value, including dependencies
+        String newValue;
+        removeDynamic(dynamic);
+        currentBeanName = beanName;
+        currentPropertyName = propertyName;
+        try {
+          newValue = parseStringValue(unparsedValue, newProperties, new HashSet());
+        } finally {
+          currentBeanName = null;
+          currentPropertyName = null;
+        }
+        if (logger.isInfoEnabled())
+          logger.info("Updating property " + beanName + "." + propertyName + " to " + newValue);
+        try {
+          //赋值
+          beanWrapper.setPropertyValue(propertyName, newValue);
+        } catch (BeansException e) {
+          logger.error("Error setting property " + beanName + "." + propertyName + " to " + newValue, e);
+        }
+      }
+    }
+    // 后置切面
+    for (String beanName : beanNames) {
+      Object bean = beanByBeanName.get(beanName);
+      try {
+        if (bean instanceof ReconfigurationAware)
+          ((ReconfigurationAware) bean).afterReconfiguration();
+      } catch (Exception e) {
+        logger.error("Error calling afterReconfiguration on " + beanName, e);
+      }
+    }
+  } catch (IOException e) {
+    logger.error("Error trying to reload properties: " + e.getMessage(), e);
+  }
+}
 ````
 
 整个流程非常简单，接受到变更事件之后，首先确定发生变化的Properties，然后获取之前在解析阶段绑定的DynamicProperty对象，从Spring上下文中获取对应的Bean实例，并讲属性设置未新的配置参数。

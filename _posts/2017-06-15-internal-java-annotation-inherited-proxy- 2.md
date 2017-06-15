@@ -126,6 +126,7 @@ public final class $Proxy0
 }
 
 ````
+
 从生成的代码中，可以很清楚看到
 
 1. JDK proxy生成的代码是面向接口的
@@ -135,7 +136,7 @@ public final class $Proxy0
 
 再看一下`java.lang.reflect.Proxy.newProxyInstance(ClassLoader loader,Class<?>[] interfaces,InvocationHandler h)`接口定义，就很容易将JDK的动态代理过程理解清楚，同时当将`IProxyMe`的Method和Parameter Annotation去除之后，在新输出的中jdk proxy对应的
 
-```java
+````java
 
 <<<<< ---- Invoking methods ----- >>>>>
 Type: class com.qiongsong.dynamic.ProxyTester$ProxyMe_$$_jvst813_0
@@ -180,7 +181,8 @@ Method: aMethod
 Invoked 4
 -----------------
 
-​````
+````
+
 
 Method调用过程中也无法得到Annotation，因为其Method是从`IProxyMe`接口中获取的，而其他的代理对象，则依然可以正常获取到Annotation，可知在这块实现上各个动态代理框架的实现过程是不一样的。而`Class<?>[] interfaces`参数也限制了jdk proxy必须建立在接口的基础上，原因也很简单，当你extends Proxy之后，无法多重继承的Java，显然没有办法再继承代理实现类。
 

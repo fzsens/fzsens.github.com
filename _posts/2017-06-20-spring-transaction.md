@@ -282,7 +282,7 @@ private void processCommit(DefaultTransactionStatus status) throws TransactionEx
 
 `AbstractPlatformTransactionManager`规定了整个事务管理的大体框架，一些具体的操作则交给派生类实现。
 
-### ![AbstractPlatformTransactionManager](http://ooi50usvb.bkt.clouddn.com/AbstractPlatformTransactionManager3.png)
+ ![AbstractPlatformTransactionManager](http://ooi50usvb.bkt.clouddn.com/AbstractPlatformTransactionManager3.png)
 
 ### 编程式事务管理
 

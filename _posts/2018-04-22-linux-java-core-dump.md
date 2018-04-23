@@ -24,7 +24,7 @@ Core Dump，当一个进程出现严重的错误导致奔溃或者异常退出�
     Max file size             unlimited            unlimited            bytes
     Max data size             unlimited            unlimited            bytes
     Max stack size            8388608              unlimited            bytes
-    * Max core file size        0                    unlimited            bytes
+    Max core file size        0                    unlimited            bytes
     Max resident set          unlimited            unlimited            bytes
     Max processes             2782                 2782                 processes
     Max open files            1024                 4096                 files

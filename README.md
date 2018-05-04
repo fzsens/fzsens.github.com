@@ -1,5 +1,5 @@
 ## 说明
-博客地址：[芥为之舟](qiongsong.com)
+博客地址：[芥为之舟](http://fzsens.github.io)
 
 ##
 

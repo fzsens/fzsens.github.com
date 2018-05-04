@@ -23,7 +23,7 @@ header-img: "img/facebook.jpg"
 
 ### 联系
 
-- [博客：www.qiongsong.com](www.qiongsong.com)
+- [博客：fzsens.github.io](fzsens.github.io)
 
 - [邮件：fzsens@gmail.com](mailto:fzsens@gmail.com)
 

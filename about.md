@@ -17,7 +17,7 @@ header-img: "img/facebook.jpg"
 - SOA实践
 - Big Data
 - Ruby&Python
-- 物流
+- 供应链
 - 宗教历史
 
 

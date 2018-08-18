@@ -253,7 +253,7 @@ public class Executors {
 
 这里并没有直接初始化线程，而只是初始化了参数，与我们自己实现的线程池对比，显然这种延迟初始化的方式，对于资源的利用方面更胜一筹。接下来看看`ThreadPoolExecutor`的类继承结构
 
-![ThreadPoolExecutor](_v_images/_threadpool_1534388286_22595.png) 
+![ThreadPoolExecutor](http://ooi50usvb.bkt.clouddn.com/_threadpool_1534388286_22595.png) 
 
 [图片来源](http://www.infoq.com/cn/articles/executor-framework-thread-pool-task-execution-part-01#)
 

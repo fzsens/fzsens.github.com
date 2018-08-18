@@ -16,9 +16,9 @@ header-img: "img/facebook.jpg"
 ### 目前关注
 - SOA实践
 - Big Data
-- Ruby&Python
+- 领域驱动设计
 - 供应链
-- 宗教历史
+- 乡村改革
 
 
 ### 联系
@@ -26,9 +26,3 @@ header-img: "img/facebook.jpg"
 - [博客：fzsens.github.io](fzsens.github.io)
 
 - [邮件：fzsens@gmail.com](mailto:fzsens@gmail.com)
-
-
-
-
-
-

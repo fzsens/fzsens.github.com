@@ -223,11 +223,10 @@ public class Executors {
 6. `threadFactory` - 执行程序创建新线程时使用的工厂。默认为`Executors.DefaultThreadFactory`
 7. `handler` - 由于超出线程范围和队列容量而使执行被阻塞时所使用的处理程序。默认为`ThreadPoolExecutor.AbortPolicy`，当超出后抛出拒绝异常
 
-这边就是`ThreadPoolExecutor`的主要核心对象，望文生义，我们也可以猜测到线程池内部的一些实现机制。参数1、2限制线程池数量，参数3，4用于空闲线程回收，参数5保存用户提交的任务，参数6是线程池初始化线程的工厂类，参数7用于任务队列满时候的处理，完整的构造函数如下
+这边就是`ThreadPoolExecutor`的主要核心对象，望文生义，我们也可以猜测到线程池内部的一些实现机制。参数1、2限制线程池数量，参数3，4用于空闲线程回收，参数5保存用户提交的任务，参数6是线程池初始化线程的工厂类，参数7用于任务队列满时候的处理，完整的构造函数如下  
 
-```java
+````java
     
-
     public ThreadPoolExecutor(int corePoolSize,
                               int maximumPoolSize,
                               long keepAliveTime,
@@ -249,7 +248,8 @@ public class Executors {
         this.threadFactory = threadFactory;
         this.handler = handler;
     }
-```
+
+````
 
 这里并没有直接初始化线程，而只是初始化了参数，与我们自己实现的线程池对比，显然这种延迟初始化的方式，对于资源的利用方面更胜一筹。接下来看看`ThreadPoolExecutor`的类继承结构
 

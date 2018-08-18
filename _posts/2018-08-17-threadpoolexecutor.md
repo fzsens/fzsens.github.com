@@ -226,6 +226,8 @@ public class Executors {
 这边就是`ThreadPoolExecutor`的主要核心对象，望文生义，我们也可以猜测到线程池内部的一些实现机制。参数1、2限制线程池数量，参数3，4用于空闲线程回收，参数5保存用户提交的任务，参数6是线程池初始化线程的工厂类，参数7用于任务队列满时候的处理，完整的构造函数如下
 
 ````java
+    
+
     public ThreadPoolExecutor(int corePoolSize,
                               int maximumPoolSize,
                               long keepAliveTime,

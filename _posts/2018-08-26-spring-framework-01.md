@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Spring应用架构（一）
+title: Spring应用架构（一）设计理念
 date: 2018-08-26
 categories: spring
 tags: [spring,java]

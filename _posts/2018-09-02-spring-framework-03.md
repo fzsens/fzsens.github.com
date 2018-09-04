@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Spring应用架构（二）AOP原理和实现
+title: Spring应用架构（三）AOP原理和实现
 date: 2018-09-02
 categories: spring
 tags: [spring,java]
@@ -273,9 +273,12 @@ around after
          * expose-class 属性：它的作用是使AopContext.currentProxy()能拿到当前的代理，基于{@link ThreadLocal}可以在对应的类获取代理类
          */
         useClassProxyingIfNecessary(parserContext.getRegistry(), sourceElement);
+        
         /**
          * 之前在 {@link ParserContext} 中有声明 {@link org.springframework.beans.factory.parsing.CompositeComponentDefinition}
+         * 
          * 则将当前{@link BeanDefinition} 添加到其中
+         * 
          * 主要用于跟踪BeanDefinition的定义，触发在{@link XmlBeanDefinitionReader} 中的 {@link ReaderEventListener}监听 BeanDefinition 注册事件
          */
         registerComponentIfNecessary(beanDefinition, parserContext);

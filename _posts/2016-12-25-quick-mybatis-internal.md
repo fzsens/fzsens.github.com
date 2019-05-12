@@ -590,5 +590,75 @@ public void clearLocalCache() {
 
 整个插件的执行过程是一个比较典型的AOP编程实践。
 
+~~修订：自己吃书了 😓，并没有说明这边补充，~~
+
+### 问题6：Mybatis Spring SqlSessiomTemplate 怎么保证线程安全？
+
+前面有提到，SqlSession 的最佳作用域是方法，SqlSessionTemplate 又是代理了 SqlSession 又是一个普通的 Spring Bean 默认为 singleton，自然会在全局被共享，那 SqlSessionTemplate 是怎么实现线程安全的。
+
+从上面的代码分析中，我们可以知道，最终执行 Myabtis 操作的调用发生在 `mapperMethod.execute(sqlSession, args);`，其中的 sqlSession，就是 SqlSessionTemplate，进入一个方法
+
+````java
+@Override
+public <T> T selectOne(String statement, Object parameter) {
+  return this.sqlSessionProxy.<T> selectOne(statement, parameter);
+}
+````
+
+就会发现实际执行的是 sqlSessionProxy，从这个名字就可以知道 SqlSessionTemplate 也采用了代理类来处理具体 SqlSession 的调用，核心就是 sqlSessionProxy 的逻辑。我们在 SqlSessionTemplate 的构造方法中，可以找到 sqlSessionProxy 的定义
+
+````java
+this.sqlSessionProxy = (SqlSession) newProxyInstance(
+    SqlSessionFactory.class.getClassLoader(),
+    new Class[] { SqlSession.class },
+    new SqlSessionInterceptor());
+````
+
+在 SqlSessionInterceptor 中可以发现调用的逻辑（忽略大部分的事务处理）
+
+````java
+public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+  SqlSession sqlSession = getSqlSession(
+      SqlSessionTemplate.this.sqlSessionFactory,
+      SqlSessionTemplate.this.executorType,
+      SqlSessionTemplate.this.exceptionTranslator);
+  try {
+    Object result = method.invoke(sqlSession, args);
+  }
+  // ... ignore
+````
+
+我们可以发现实际上每次的 SqlSession 都是会调用 getSqlSession 方法获取
+
+````java
+public static SqlSession getSqlSession(SqlSessionFactory sessionFactory, ExecutorType executorType, PersistenceExceptionTranslator exceptionTranslator) {
+
+  notNull(sessionFactory, NO_SQL_SESSION_FACTORY_SPECIFIED);
+  notNull(executorType, NO_EXECUTOR_TYPE_SPECIFIED);
+
+  SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
+
+  SqlSession session = sessionHolder(executorType, holder);
+  if (session != null) {
+    return session;
+  }
+
+  if (LOGGER.isDebugEnabled()) {
+    LOGGER.debug("Creating a new SqlSession");
+  }
+
+  session = sessionFactory.openSession(executorType);
+
+  registerSessionHolder(sessionFactory, executorType, exceptionTranslator, session);
+
+  return session;
+}
+````
+
+到这边整体的逻辑也非常清晰了，通过 TransactionSynchronizationManager 判断当前线程对应的事务管理器是否有对应的 SqlSessionHolder，如果有则返回其中封装的 SqlSession，如果没有，则通过 sessionFactory 创建，并封装为 SessionHolader ，调用 `TransactionSynchronizationManager.bindResource` 注册到事务管理器中，后者在内部使用 ThreadLocal 变量来存储。
+
+这样就可以实现对 SqlSession 的安全调用和事务管理了，代理类是各类框架实现代码和功能解耦的常用手段，实际编程中，可以借鉴这些代码的一些设计。
+
+
 
 >到这边主要的Mybatis功能和代码分析基本完成了，Mybatis的代码比较简洁，但是注释较少，可能作者觉得逻辑比较简单，不需要额外太多注释。我fork了`3.4.2-snapshot`的版本，并添加了一些中文注释，可以在github中查看到，[mybatis-3 with comments](https://github.com/fzsens/mybatis-3)

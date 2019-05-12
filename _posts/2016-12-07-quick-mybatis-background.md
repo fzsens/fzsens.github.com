@@ -7,11 +7,11 @@ tags: [mybatis]
 description: Mybatis的诞生背景和ORM的一些背景知识
 ---
 
-Mybatis源自于Ibatis，原本是Clinton Begin 创建的JPetStore项目中的Dao 层，由两个部分组成Ibatis DAO 和Ibatis SQL Map，因为JPetStore的巨大影响，Ibatis也引起广泛的关注，到2004年Ibatis2 发布之后，Clinton将Ibatis捐赠给Apache Software Foundation。2010年Ibatis的开发团队又从ASF迁出，将代码迁移如Google Code，并基于Ibatis3创建了Mybatis项目，之后Google Code宣布关闭，目前Mybatis的代码托管在GitHub之上[Mybatis-3](https://github.com/mybatis/mybatis-3)。
+Mybatis源自于ibatis，原本是Clinton Begin 创建的 JPetStore 项目中的 Dao 层，由两个部分组成 ibatis DAO 和 ibatis SQL Map，因为JPetStore的巨大影响，Ibatis也引起广泛的关注，到2004年 ibatis2 发布之后，Clinton将Ibatis捐赠给 Apache Software Foundation。2010年Ibatis的开发团队又从ASF迁出，将代码迁移如 Google Code，并基于 ibatis3 创建了 Mybatis 项目，之后 Google Code宣布关闭，目前 Mybatis 的代码托管在GitHub之上[Mybatis-3](https://github.com/mybatis/mybatis-3)。
 
 Mybatis诞生的背景，也正是随着面向对象语言以及思想的兴起和流行，大量的系统使用诸如C++、Java、.NET以及Ruby等语言进行开发，在这些语言中，一个实体（entity）被抽象为一个类（class）。下面主要以Java作为编程语言进行描述。
 
-在Java中，简单包含数据的抽象被称为POJO（plain old Java object是一个简单的Java类，定义数据字段以及访问数据字段的getter和setter方法），其特点是简单，不依赖于特定的框架实现，例如：
+在Java中，简单包含数据的抽象被称为POJO（plain old Java object 是一个简单的Java类，定义数据字段以及访问数据字段的getter和setter方法），其特点是简单，不依赖于特定的框架实现，例如：
 
 ````java
 public class MyBean {
@@ -52,7 +52,7 @@ while (resultSet.next()) {
 
 程序中通过JDBC提供的`Connection`和数据库建立连接，并使用`Statement`执行SQL语句获取`ResultSet`。可以看到，`ResultSet`的数据结构基本和数据库中的数据结构是相互对应的。`getXXX`方法的参数即为数据库中的列名或者索引号。通过`ResultSet`作为窗口，程序就能够操作数据库中的数据了。
 
->`ResultSet`表示一组数据库数据集合，并默认在内部维护一个游标（`Cursor`），通过游标的向前滑动（调用`next()`）方法，可以依次访问SQL从数据库中查询得到的数据集，`ResultSet`提供了`getXXX`的操作实现值的读取和类型的转换。`Jdbc`中只定义了`ResultSet`接口，实际的实现在不同的数据驱动或者数据源中都可以进行自定义。但是核心都是维护从数据集合以及游标，并提供操作数据集的方法。
+>`ResultSet`表示一组数据库数据集合，并默认在内部维护一个游标（`Cursor`），通过游标的向前滑动（调用`next()`）方法，可以依次访问SQL从数据库中查询得到的数据集，`ResultSet`提供了`getXXX`的操作实现值的读取和类型的转换。`Jdbc`中只定义了`ResultSet`接口，实际的实现在不同的数据驱动或者数据源中都可以进行自定义。但是核心都是维护数据集合以及游标，并提供操作数据集的方法。
 
 在面向对象的编程语言中，一般还会同时定义对应的数据对象（`Object`）
 
@@ -80,5 +80,7 @@ while (resultSet.next()) {
 在上面的代码中描述了`ORM`要完成的核心功能，就是将`ResultSet`中的每一行记录转换为一个`Author`对象。其本质是非常简单而有规律的一一映射操作。但是如果每个这样的映射关系都通过手工编码的方式来完成，就显得特别得笨拙也容易出现typo错误。
 
 在编程世界，有规律的重复必然会产生自动化的方案。因此各种解决ORM问题的框架也应运而生。本文主要描述的Mybatis也是其中之一，其他比较有代表性的诸如`Hibernate` ，`Spring JdbcTemplate` 等也都从各个不同的角度出发，来解决ORM的问题，并拓展到解决整个程序数据访问层的问题。
-![](https://i.imgur.com/QIOdLJh.png)
+
+![ormlayer](/postsimg/mybatis/ormlayer.png)
+
 一般在引入`ORM`框架之后，所有对于数据库的操作都会通过`ORM`来完成。因此，虽然ORM框架是为了解决对象关系映射的问题而诞生的，但根据不同的产品出发点和目标，最终的实现往往比ORM这个单纯的映射操作来得复杂。

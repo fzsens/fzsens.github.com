@@ -14,7 +14,7 @@ description: 介绍Mybatis常用使用方法
 
 在JDBC中，操作数据库的接口为`Connection`，在Mybatis应用中，这个接口被`SqlSession`封装，而产生`SqlSession`的对象则是`SqlSessionFactory`，从名称就可以看出是一个工厂类。每一个Mybatis应用（单个数据源），一般都有且仅有一个`SqlSessionFactory`实例，并围绕这个实例构建应用的数据库操作层。
 
-因此要使用Mybatis首先要创建一个`SqlSessionFactory`。而`SqlSessionFactory`一般都是使用`SqlSessionFactoryBuilder`创建，`SqlSessionFactoryBuilde`r又可以使用XML或者编程方式的`Configuration`创建。
+因此要使用Mybatis首先要创建一个`SqlSessionFactory`。而`SqlSessionFactory`一般都是使用`SqlSessionFactoryBuilder`创建，`SqlSessionFactoryBuilder`又可以使用XML或者编程方式的`Configuration`创建。
 
 >在Java编程体系中，XML作为一种标记语言被广泛使用作为配置文件的定义，但是实际上在后台都会有对应的`Translator`程序，将XML翻译称为对应的Java对象式的数据结构，才能被系统真正读取，例如Spring中的`Bean`都会被翻译称为`BeanDefinition`实例。
 
@@ -168,7 +168,7 @@ int deletedRow = authorMapper.delete("Yuhua");
 List<Author> list = authorMapper.selectList();
 ````
 
->执行上面的SQL也可以使用类似`List<Author> list = sqlSession.selectList("com.qiongsong.mybatis.mapper.AuthorMapper.selectList");`的方式，后续原理解析会解释为什么可以这样
+>执行上面的SQL也可以使用类似`List<Author> list = sqlSession.selectList("com.qiongsong.mybatis.mapper.AuthorMapper.selectList");`的方式，后续原理解析会解释为什么可以这样。
 
 ### 作用域的控制
 
@@ -190,7 +190,7 @@ List<Author> list = authorMapper.selectList();
 对于Myabtis中几个核心对象的作用域如下
 
 1.	SqlSessionFactoryBuilder：
-这个类可以被实例化、使用和丢弃，一旦创建了`SqlSessionFactory`，就不再需要它了。因此 `SqlSessionFactoryBuilder`实例的最佳范围是方法范围（也就是局部方法变量）。你可以重用 `SqlSessionFactoryBuilder`来创建多个`SqlSessionFactory`实例，但是最好还是不要让其一直存在以保证所有的XML解析资源开放给更重要的事情。
+这个类可以被实例化、使用和丢弃，一旦创建了`SqlSessionFactory`，就不再需要它了。因此 `SqlSessionFactoryBuilder`实例的最佳范围是方法范围（也就是局部方法变量）。你可以重用 `SqlSessionFactoryBuilder`来创建多个`SqlSessionFactory`实例，但是最好还是不要让其一直存在，以保证所有的XML解析资源开放给更重要的事情。
 
 2.	SqlSessionFactory：
 `SqlSessionFactory`一旦被创建就应该在应用的运行期间一直存在，没有任何理由对它进行清除或重建。使用`SqlSessionFactory`的最佳实践是在应用运行期间不要重复创建多次，因此 `SqlSessionFactory`的最佳作用域是应用范围。有很多方法可以做到，最简单的就是使用单例模式或者静态单例模式。(实践中使用IOC框架的singleton来实现最为普遍，后面说到和Spring的集成会说到)
@@ -366,7 +366,7 @@ Mybatis提供了很多的配置属性参数，可以根据不同的应用场景�
 	但是缓存也有一个很明显的问题，缓存的数据和即使数据不一定一致，这就涉及到缓存过期问题。如何控制好缓存的过期问题，设计合适的缓存策略（包括缓存更新，缓存穿透等）是缓存应用首先要考虑的一个点。
 	其次，在分布式系统下，和缓存的过期策略相伴相随的是缓存的共享策略，特别是在同构系统下，用户的请求可能会被发送到同构集群中的任意一个服务节点，在多步骤多流程的业务操作（一个业务操作可能多次访问后台数据）中，如果同构系统中的缓存数据不一致，可能会导致数据的异常。这时候就会设计到缓存共享的问题，考虑使用独立于应用系统的集中式缓存管理，例如Redis、Memcache等。有了集中式的缓存，再加上原来驻留在应用中的本地缓存，一套比较复杂的系统，在缓存的使用上往往都会涉及成多级缓存的模式。需要根据业务的特点，制定缓存策略，有几个比较通用的原则：对于参与业务计算的热点数据并且不经常进行修改，并且是分布式部署，应该将缓存设置为全局缓存。并在可能发送业务修改的地方，设置更新缓存的功能。对于不需要参与业务计算，并且存在大量访问的时候，可以适当创建多级缓存机制，在并在多个层级的缓存中，创建合适的TTL保存周期性的数据同步。
 	在Mybatis中内置二级缓存，都是默认开启
-	- 一级缓存基于`SqlSession`，在同一个`SqlSession`中相同Sql会在`SqlSession`中的PerpetualCache缓存中获取。
+	- 一级缓存基于`SqlSession`，在同一个`SqlSession`中相同Sql会在`SqlSession`中的`PerpetualCache`缓存中获取。
 	- 二级缓存基于命名空间（MapperXML中配置），可以跨越多个`SqlSession`共享。并可以通过配置设置定时过期的时间，以及大小限制。但是有一个地方需要特别注意，二级缓存基于命名空间创建也就是，一般情况下，多个`Mapper`之间的缓存数据是不相互影响的，同一个`Mapper`中，发生数据更改，可以由Mybatis自动完成缓存更新，但如果相同数据存储在不同的`Mapper`中，则可能由于二级缓存的启用，带来数据不一致的问题。
 
 	在Mybatis-Spring中事务的管理交由Spring事务管理器完成，每一个Sql语句的执行完成后都会执行`sqlSession.close()`方法，因此在Mybatis-Spring体系中，一级缓存无法生效。而二级缓存因为可以跨越`SqlSession`存在因此不受影响。

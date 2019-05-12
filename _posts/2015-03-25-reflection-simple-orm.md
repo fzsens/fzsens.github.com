@@ -483,6 +483,8 @@ MapSqlParameterSource param = new MapSqlParameterSource();
 即可实现查询时候的映射。
 其中涉及到的事务控制和其他安全控制，此处就不一一列举，通过spring的IOC，以及`DataSourceTransactionManager`，可以构建出自己的事务管理系统。
 
-总结：相比较Ruby的元编程，使用Java来处理程序自管理显得额外繁琐，异常机制也带来了大量不必要的代码冗余。但是如果能够善用反射和注解，也能够给工作带来极大的便利。  
+总结：相比较Ruby的元编程，使用Java来处理程序自管理显得额外繁琐，异常机制也带来了大量不必要的代码冗余。但是如果能够善用反射和注解，也能够给工作带来极大的便利。
 
-基于上面的原理，实现的`ficus`工具，可以在 [https://github.com/fzsens/ficus](https://github.com/fzsens/ficus "ficus") 获取
+关于元数据（MetaData），用来描述程序的数据可以成为元数据，例如Annotation、或者是XML。在复杂的编程中，会引入动态化的需求，就也就是需要程序能够适用不同的环境，元数据可以作为一种环境描述语言，作为动态编程的重要补充。
+
+基于上面的原理，实现的`ficus`工具，可以在 [https://github.com/fzsens/ficus](https://github.com/fzsens/ficus "ficus") 获取。

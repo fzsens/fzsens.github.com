@@ -75,7 +75,7 @@ public static void main(String[] args) {
 }
 ````
 
-上面的代码，使用了轮询来处理Future列表监控状态的变化，在`while`循环中，判断这个结果。但是这个方案存在一个重大的缺陷，及在执行完`③`到执行`④`之间的时间内，可能有一些Future 的状态变化为已经完成，则`isAllDone`测试为`ture`，循环会退出。因此这一些Future的返回结果无法被正确处理。
+上面的代码，使用了轮询来处理Future列表监控状态的变化，在`while`循环中，判断这个结果。但是这个方案存在一个重大的缺陷，即在执行完`③`到执行`④`之间的时间内，可能有一些Future 的状态变化为已经完成，则`isAllDone`测试为`ture`，循环会退出。因此这一些Future的返回结果无法被正确处理。
 
 因此在外部想要实时监控Future的状态存在一定的困难，想要避免`get()`方法的等待，就必须使用实时返回结构的`isDone()`来识别Future的执行情况，但是由于状态的处理和线程监控程序存在时间差异，因此很难保证结果的一致性，很容易因为状态的变化，而导致异常。
 
@@ -191,6 +191,7 @@ public static void main(String[] args) {
             } catch (ExecutionException e) {
               e.printStackTrace();
             }
+            // 执行回调函数
             executoInner.execute(listenerInner);
             executoInner.shutdown();
           }

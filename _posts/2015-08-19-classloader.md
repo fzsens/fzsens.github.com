@@ -38,7 +38,7 @@ System.out.println(clazz1 == clazz2);
 
 `ClassLoader`在实现的时候使用层级委托的形式，除了引导类加载器之外的每一个`ClassLoader`都具有父`ClassLoader`,如下图：
 
-![classloader继承](https://i.imgur.com/WOiuTUQ.png)
+![classloader继承](/postsimg/classloader/classloader.png)
 
 在尝试进行类加载的时候，优先尝试使用父`ClassLoader`进行加载，如果父ClassLoader为空(`ExClassLoader`的父加载器为`Boostrap ClassLoader`，但是`BoostrapClassLoader`为C++实现，无法在Java代码中获取实例，因此`ExtClassLoader`的`parent`为`null`),则尝试`Boostrap ClassLoader`，最后尝试自定义类加载器，可以在`ClassLoader`类中看到对应的实现：
 

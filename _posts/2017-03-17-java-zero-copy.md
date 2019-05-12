@@ -53,6 +53,7 @@ Java使用`java.nio.channels.FileChannel`的`transferTo`和`transferFrom`来实�
 Figure 1. 传统的数据拷贝途径
 
 ![figure-1](http://i.imgur.com/9yPGkET.gif)
+![figure-1](/postsimg/figure1.gif)
 
 Figure 2. CPU上下文切换过程
 

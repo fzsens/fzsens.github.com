@@ -46,6 +46,7 @@ Canal Server模拟MySQL的Slave服务器，dump MySQL的binlog并解析成为事
 如果研究Kafka以及MySQL的binlog，会发现其中有很多共同的地方，本质上都是作为日志，记录数据变更的过程。因此我们可以考虑是不是第二种构建缓存的模式，可以使用binlog来作为数据的来源。再结合Canal的功能和定位，我们可以将整体缓存架构设计为
 
 ![](https://i.imgur.com/x2McRHc.png)
+![图片](img/_posts_images/canal/canal-cache.png)
 
 对比这种模式和第二种模式，会发现两者之间有很多类似的地方，只是MQ队列的位置被binlog和Canal取代。
 

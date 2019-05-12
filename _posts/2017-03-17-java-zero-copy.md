@@ -52,13 +52,11 @@ Java使用`java.nio.channels.FileChannel`的`transferTo`和`transferFrom`来实�
 
 Figure 1. 传统的数据拷贝途径
 
-![figure-1](http://i.imgur.com/9yPGkET.gif)
-![figure-1](/postsimg/figure1.gif)
-![figure-1](/postsimg/zookeeper/election-main.png)
+![figure-1](/postsimg/zerocopy/figure1.gif)
 
 Figure 2. CPU上下文切换过程
 
-![figure-2](http://i.imgur.com/QVznHMB.gif)
+![figure-2](/postsimg/zerocopy/figure2.gif)
 
 具体步骤如下
 
@@ -98,11 +96,11 @@ zero copy就是通过减少无谓的数据拷贝来提高性能。
 
 Figure-3 展示了transferTo方法调用的数据拷贝过程
 
-![figure-3](http://i.imgur.com/3acEzao.gif)
+![figure-3](/postsimg/zerocopy/figure3.gif)
 
 Figure-4 展示了transferTo方法调用的CPU上下文切换
 
-![figure-4](http://i.imgur.com/gfmf7IV.gif)
+![figure-4](/postsimg/zerocopy/figure4.gif)
 
 具体步骤如下
 
@@ -116,7 +114,7 @@ Figure-4 展示了transferTo方法调用的CPU上下文切换
 
 Figure-5 展示了在调用`transferTo`方法在支持gather opertaitons的环境下的表现
 
-![](http://i.imgur.com/gMfGzUF.gif)
+![figure-5](/postsimg/zerocopy/figure5.gif)
 
 完整的代码如下（原文中代码存在一些小的问题）
 

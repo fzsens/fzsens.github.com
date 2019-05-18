@@ -28,6 +28,8 @@ description: 架构设计的方法论
 
 系统分析，则是进一步提出解决问题的方法，与可行的逻辑方案以满足系统的需求实现预期的目标。其本质就是**抽象**。而在**细化架构**中则需要更多关注具体的拆分和逻辑。
 
+概念架构阶段，需要核心关注得就是各种需求，需求来源于业务或者战略发展，找到 Owner ，明确不同维度得需求，是首先要做得事情。架构师在心中要首先明确需求，这个是前提。
+
 ### 分而治之
 
 >Divide-and-conquer is usually the best approach for achieving any scalability goal
@@ -86,7 +88,7 @@ description: 架构设计的方法论
 
 逻辑架构的设计应该使用，结构设计和行为设计相分离。使用灰盒包图，关注核心系统中的关键类。从而更明白地说明子系统之间的协作关系。
 
-![architecture](http://i.imgur.com/mnIPlcE.jpg)
+![architecture](/postsimage/archituredesign/sequenceDia.jpg)
 
 ### 架构的权衡
 

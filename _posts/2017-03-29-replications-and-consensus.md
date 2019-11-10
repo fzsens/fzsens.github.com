@@ -36,13 +36,13 @@ description: 多副本和分布式一致性保证
 
 也是我们接触最多的Master-Salve结构或者Primary-secondary结构，典型的应用比如MySQL的binlog复制
 
-![master-slave-async](http://i.imgur.com/ypiMEYs.png)
+![master-slave-async](/postsimg/repliandconsensus/ypiMEYs.png)
 
 步骤：
 
 1. 主库接收写请求，将写请求写入到binlog中
 2. 主库完成请求，返回客户端请求执行成功
-3. 异步将数据从主库同步到其他从库，主要使用redo-log重放技术
+3. 异步将数据从主库同步到其他从库，主要使用replay log重放技术
 
 问题：
 
@@ -55,7 +55,7 @@ description: 多副本和分布式一致性保证
 
 这种方法是对异步复制遇到问题的改进，将异步修改为同步，典型的如MySQL的主备强同步，可以保证写入到系统中的数据不会出现丢失。
 
-![master-slave-sync](http://i.imgur.com/kdUr0zV.png)
+![master-slave-sync](/postsimg/repliandconsensus/kdUr0zV.png)
 
 步骤：
 
@@ -71,7 +71,7 @@ description: 多副本和分布式一致性保证
 
 这种方法是对同步复制方法的一个改善，保证最新的数据存储在至少主库+一台备库上，并且当一定数量的机器出现故障的时候，也可以保证系统可用。
 
-![master-slave-half-sync](http://i.imgur.com/SfGZAIg.png)
+![master-slave-half-sync](/postsimg/repliandconsensus/SfGZAIg.png)
 
 步骤：
 
@@ -79,13 +79,13 @@ description: 多副本和分布式一致性保证
 2. 主库复制日志到从库中
 3. 如果有X{1<=X<=N} 个从库返回写入完成，则认为操作完成，返回确认给到客户端
 
-问题：从任意从库中读取数据的时候，无法保证读取到的是最新的数据。
+问题：从任意从库中读取数据的时候，无法保证读取到的是最新的数据。MySQL 得 semi-sync 就是使用这种策略，只需要一个从库返回 ack 即可认为事务提交成果。
 
 #### 多数派读写
 
 少数服从多数，只要确保读写都得到半数节点的确认就认为写入和读取是可靠的，没有主库的概念，小于半数的节点发生故障的情况下，系统依然可用。典型的如Cassandra
 
-![majority-rw](http://i.imgur.com/3FEsJON.png)
+![majority-rw](/postsimg/repliandconsensus/3FEsJON.png)
 
 步骤：
 
@@ -124,7 +124,7 @@ inc 简单的事务型操作
 
 单线程访问：
 
-![single-getandset](http://i.imgur.com/pumZPkH.png)
+![single-getandset](/postsimg/repliandconsensus/pumZPkH.png)
 
 读取写入的时候，使用多数派准则。在单线程的模式下，读写正常。
 
@@ -133,7 +133,7 @@ inc 简单的事务型操作
 	X进程读取i-1 并设置i-2 = i-1 + 1
 	Y进程读取i-1 并设置i-2 = i-1 + 2 
 
-![multiple-rw](http://i.imgur.com/CD6mmA1.png)
+![multiple-rw](/postsimg/repliandconsensus/CD6mmA1.png)
 
 如果顺序执行，应该期待最后的值为i-3 = 5，这需要Y知道X已经写入了i-2，因此如何实现这个机制是并发控制的关键。
 
@@ -156,7 +156,7 @@ inc 简单的事务型操作
 
 方案：每次写入一个值前，先运行一次多数派读，来确定这个值是否或者可能被写过了。
 
-![ask-modify](http://i.imgur.com/vM4o0ps.png)
+![ask-modify](/postsimg/repliandconsensus/vM4o0ps.png)
 
 X询问时，多数派读得到值未被修改，X进行inc操作
 Y询问时，多数派读得到值已经被修改，Y放弃操作
@@ -165,19 +165,19 @@ Y询问时，多数派读得到值已经被修改，Y放弃操作
 
 如果X和Y同时以为还没有值被写入过，然后同时开始写
 
-![concurrent-ask-set](http://i.imgur.com/vxM4W1C.png)
+![concurrent-ask-set](/postsimg/repliandconsensus/vxM4W1C.png)
 
 最终会有一个更新丢失 i-2 可能为 3 或者 4
 
 方案的改进：会出现丢失更新的原因在于数据在第一次询问之后（确定可能被修改）之后，并没有给出锁定数据等待修改的保证。因此需要让存储节点记住谁最后一次做过“写前读取”，并给出承诺拒绝其他的“写前读取”的写入操作。
 
-![reject-write](http://i.imgur.com/AJVUj4s.png)
+![reject-write](/postsimg/repliandconsensus/AJVUj4s.png)
 
 这里面，保证接受最后一次“写前读取”的过程，就是对“被确定值”不被修改的保证。作用等同于我们在单机事务中使用的排他锁的作用。不同的是，排他锁是通过本地的文件lock，而这边只能通过网络通信来进行保证。
 
 总结起来，整个系统实际上是围绕着状态机（相同的起始状态，执行相同的命令会最终达到相同的终止状态）的概念来保证最后存储的一致性。每一个单独的存储节点本身是一个独立的状态机，节点内部存储的数据，按照其版本从小到打，构成一个抽象的Log，存储着历史上所有的值变更记录。只要保证Log以相同的顺序包含相同的值，也就是每个版本的数据都相同。在一些节点出现故障的时候，Log依然能够被正确复制和传播，那么所有节点组成的系统就构成了一个高可靠的状态机。
 
-![state-machine](http://i.imgur.com/N29HTHc.png)
+![state-machine](/postsimg/repliandconsensus/N29HTHc.png)
 
 最终我们给出的一致性方案中，客户端和节点之间通过询问和保证的模式来确保已经确定的值不会被更改，通过多数派写/读的方式来确保数据最新的数据能够被存储和访问。从而保证了分布式一致性，这也是`Paxos`算法的雏形。
 

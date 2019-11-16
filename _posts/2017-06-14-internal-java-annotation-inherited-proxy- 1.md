@@ -13,14 +13,14 @@ description: 动态代理中Annotation的继承管理和动态代理原理
 
 我们的规则引擎通过`Annotation`实现流程分支和行为的控制，当我将规则使用`@Service`托管给Spring之后，却出现无法通过引擎规则验证的情况的情况，经过简单的排除，发现是因为通过Spring注入的实例获取`Annotation`的时候无法正常获取到对应的注解。
 
-````java
+```java
 
 A foundAnnotation = annotatedType.getAnnotation(targetAnnotation);
 
-````
+```
 但是实现的RuleImpl确实有写注解的，分析得到，原来通过Spring拓展的Rule实例，是由通过cglib动态生成的代理类，而cglib的代理，继承了代理类，在查看注解类型之后，原来是因为规则注解`@Rule`，没有设置`@Inherited` meta-annotation，添加`Inherited`的注解，在通过`getAnnotation(AnnotationClass)`获取注解的时候，如果在当前类获取不到，则会到超类进行查找直到找到，或者到Object为止，代码实现如下
 
-````java
+```java
 
 private AnnotationData createAnnotationData(int classRedefinedCount) {
     Map<Class<? extends Annotation>, Annotation> declaredAnnotations =
@@ -57,11 +57,11 @@ private AnnotationData createAnnotationData(int classRedefinedCount) {
     return new AnnotationData(annotations, declaredAnnotations, classRedefinedCount);
 }
 
-````
+```
 
 解决的方法有两种，一种是在`@Rule`中增加`@Inherited`，另一种是自己手工编写获取注解的逻辑，具体可以参考Spring中AnnotationUtils.findXXX，系列方法，原理也和上面的类似
 
-````java
+```java
 
 	for (Class<?> ifc : clazz.getInterfaces()) {
 		A annotation = findAnnotation(ifc, annotationType, visited);
@@ -77,7 +77,7 @@ private AnnotationData createAnnotationData(int classRedefinedCount) {
 	// recursive call
 	return findAnnotation(superclass, annotationType, visited);
 
-````
+```
 
 当找不到对应的注解时，进行一次递归调用。
 
@@ -96,7 +96,7 @@ private AnnotationData createAnnotationData(int classRedefinedCount) {
 
 首先定义三种不同类型的注解
 
-````java
+```java
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
@@ -116,13 +116,13 @@ public static @interface MehtodAnnotation {
 public static @interface ParamAnnotation {
 }
 
-````
+```
 
 因为我们主要研究的是运行时注解，因此保留策略是RUNTIME，目标类型分别是TYPE代表类/接口，METHOD代表方法，PARAMETER代表参数注解。
 
 接着定义一对方法和实现类
 
-````java
+```java
     @TypeAnnotation
     public static interface IProxyMe {
         @MehtodAnnotation
@@ -137,13 +137,13 @@ public static @interface ParamAnnotation {
             System.out.println("-----------------");
         }
     }
-````
+```
 
 内容很简单，不做赘述。
 
 定义分离各类注解的方法，为了简单起见，将内容直接打印出来
 
-````java
+```java
 
 /**
  * @param type 代理类型
@@ -193,11 +193,11 @@ static void printMethodAnnotations(Method method) {
     }
 }
 
-````
+```
 
 利用放射方法，获取注解，接着定义不同类型的代理类，这里选择几种最为常用的动态代理框架，jdk，cglib，javassist，byteBuddy
 
-````java
+```java
 
 static Object javassistProxy(IProxyMe in) throws Exception {
     ProxyFactory pf = new ProxyFactory();
@@ -253,7 +253,7 @@ static Object byteBuddyProxy(final IProxyMe in) throws IllegalAccessException, I
             .make().load(ProxyMe.class.getClassLoader()).getLoaded().newInstance();
 }
 
-````
+```
 
 每一个动态代理在调用aMethod之前都会植入，打印TypeAnnotation和MethodAnnotation的方法。各个动态代理类的写法，可以参考各个文档，一般我们使用较多的为jdk和cglib，byteBuddy在javaagent使用的较多。
 
@@ -384,7 +384,7 @@ Invoked 4
 
 为了验证`@Inherited`注解的效果，将所有的注解类型都添加`@Inheried`,再看一下输出结果
 
-````java
+```shell
 
 no proxy for Class: interface com.qiongsong.dynamic.ProxyTester$IProxyMe
 Type: class com.qiongsong.dynamic.ProxyTester$ProxyMe
@@ -474,6 +474,6 @@ Method: aMethod
 Invoked 4
 -----------------
 
-````
+```
 
 比较两次的输出可以发现，添加了`@Inherited`之后，除了jdk proxy之外，其他的代理类型，在两次输出中都可以找到TypeAnnotation，但是Method和Parameter Annotation，依然无法正常获取，通过这个现象初步判断，JDK生成的代理类型，并没有拓展(extends)，我们的实现类`ProxyMe`，而其他的代理对象则extends了ProxyMe。下一篇我们通过HSDB，详细研究一下动态代理生成的.class内容，解开动态代理的面纱。

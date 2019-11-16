@@ -31,9 +31,16 @@ class ClassB {
 }
 ````
 
-一个数据库操作过程一般四个过程构成，获取`Connection` ；进行SQL操作 ；提交；关闭链接，如果希望`insert1`和`insert2`在同一个`Transaction`中，很显然只要保证两个方法获取到的是同一个`Connection`即可，在两个方法都执行成功后进行提交，或者出现异常进行回滚，则可以通过数据库的undo机制保证事务特性。
+一个数据库操作过程一般四个过程构成
 
-如果是我们自己进行实现，遇到的第一个问题就是如何在两个方法之间传递`Connection`，能想到的一个办法是通过`ThreadLocal`来绑定线程变量，实现在不同方法上下文之间共享`Connection` ；第二个问题是如何控制提交和回滚。这两个问题都可以通过切面编程来解决。将方法进行增强，在方法开始之前获取`Connection`并绑定到`ThreadLocal`中，方法执行的时候`getConnection()`的操作，需要从刚才绑定的`ThreadLocal`中获取，完成操作之后，再由增强方法进行同意的提交。
+* 获取`Connection` 
+* 进行SQL操作 
+* 提交或者回滚
+* 关闭链接
+
+如果希望`insert1`和`insert2`在同一个`Transaction`中，很显然只要保证两个方法获取到的是同一个`Connection`即可，在两个方法都执行成功后进行提交，或者出现异常进行回滚，则可以通过数据库的undo机制保证事务特性。
+
+如果是我们自己进行实现，遇到的第一个问题就是如何在两个方法之间传递`Connection`，能想到的一个办法是通过`ThreadLocal`来绑定线程变量，实现在不同方法上下文之间共享`Connection` ；第二个问题是如何控制提交和回滚。这两个问题都可以通过切面编程来解决。将方法进行增强，在方法开始之前获取`Connection`并绑定到`ThreadLocal`中，方法执行的时候`getConnection()`的操作，需要从刚才绑定的`ThreadLocal`中获取，完成操作之后，再由增强方法进行统一的提交。
 
 在Spring中对事务的管理也大体按照上面的思路来实现。
 
@@ -63,13 +70,13 @@ public interface PlatformTransactionManager {
 >
 > `TransactionStatus`记录了事务的状态，在提交或者回滚时候，根据事务状态实现不同的操作，其主要完成几个工作：查询事务状态；`setRollbackOnly()`用于标记当前事务使其回滚；SavePoint功能用于支持嵌套事务；
 
-![PlatformTransactionManager](http://ooi50usvb.bkt.clouddn.com/PlatformTransactionManager.png)
+![PlatformTransactionManager](/postsimg/springtxn/PlatformTransactionManager.png)
 
 从这个接口中就可以知道，事务管理的核心就是开启/获得事务，提交以及回滚事务。具体的实现依赖于各个事务管理平台。`PlatformTransactionManager`使用策略模式，在它提供的基础抽象的基础上，可以根据不同的数据访问层选择不同的实现策略。我们使用较多的为`DataSourceTransactionManager`,其为`JDBC`以及`Mybatis`提供事务管理服务。
 
-Spring使用模板方法的设计模式，提供了`AbstractPlatformTransactionManager`作为所有的事务管理器的固有实现，预留一些模板方法给不同的实现类型进行定制实现。
+Spring使用模板方法的设计模式，提供了`AbstractPlatformTransactionManager`作为所有的事务管理器的大部分默认实现，预留一些模板方法给不同的实现类型进行定制实现。
 
-````java
+```java
 public final TransactionStatus getTransaction(TransactionDefinition definition) throws TransactionException {
   // template 设计模式
   Object transaction = doGetTransaction();
@@ -110,10 +117,11 @@ public final TransactionStatus getTransaction(TransactionDefinition definition) 
       DefaultTransactionStatus status = newTransactionStatus(
         definition, transaction, true, newSynchronization, debugEnabled, suspendedResources);
       /**
-                 * template 方法，开启一个事务
-                 */
+       * template 方法，开启一个事务
+       * 会调用 TransactionSynchronizationManager 将 connectionHolder 绑定到线程上下文中
+       */
       doBegin(transaction, definition);
-      //绑定事务信息到当前线程中
+      // 修改 TransactionSynchronizationManager 的状态
       prepareSynchronization(status, definition);
       return status;
     }
@@ -136,7 +144,7 @@ public final TransactionStatus getTransaction(TransactionDefinition definition) 
     return prepareTransactionStatus(definition, null, true, newSynchronization, debugEnabled, null);
   }
 }
-````
+```
 
 `getTransaction`方法的核心实际上是开启一个事务。
 
@@ -144,7 +152,7 @@ public final TransactionStatus getTransaction(TransactionDefinition definition) 
 private void processRollback(DefaultTransactionStatus status) {
   try {
     try {
-      // 触发TransactionSynchronization的前置是件
+      // 触发TransactionSynchronization的前置事件
       triggerBeforeCompletion(status);
       if (status.hasSavepoint()) {
         if (status.isDebug()) {
@@ -282,7 +290,7 @@ private void processCommit(DefaultTransactionStatus status) throws TransactionEx
 
 `AbstractPlatformTransactionManager`规定了整个事务管理的大体框架，一些具体的操作则交给派生类实现。
 
- ![AbstractPlatformTransactionManager](http://ooi50usvb.bkt.clouddn.com/AbstractPlatformTransactionManager3.png)
+ ![AbstractPlatformTransactionManager](/postsimg/springtxn/AbstractPlatformTransactionManager3.png)
 
 ### 编程式事务管理
 
@@ -315,11 +323,11 @@ transactionManager.commit(status);
 
 这里核心是`Connection conn = DataSourceUtils.getConnection(dataSource);`
 
-````java
+```java
 public static Connection doGetConnection(DataSource dataSource) throws SQLException {
   Assert.notNull(dataSource, "No DataSource specified");
 
-  // 从当前上下文中Connection
+  // 从当前线程上下文中Connection
   ConnectionHolder conHolder = (ConnectionHolder) TransactionSynchronizationManager.getResource(dataSource);
   if (conHolder != null && (conHolder.hasConnection() || conHolder.isSynchronizedWithTransaction())) {
     conHolder.requested();
@@ -359,11 +367,11 @@ public static Connection doGetConnection(DataSource dataSource) throws SQLExcept
 
   return con;
 }
-````
+```
 
 当在同一个线程中获取线程的时候会获取同一个`Connection`。使用原生Spring API的方式，显然比较繁琐，在Spring中大量使用的一种设计模式是模板方法，例如各种XxxTemplate类，一般都是定义了一个执行模板，通过模板方法和策略模式结合实现设计上的解耦和拓展上的灵活。 同样的对于编程式事务的管理也提供了`TransactionTemplae`
 
-````java
+```java
 PlatformTransactionManager platformTransactionManager = new DataSourceTransactionManager(dataSource);
 Object result = new TransactionTemplate(platformTransactionManager).execute(new TransactionCallback<Object>() {
   public Object doInTransaction(TransactionStatus transactionStatus) {
@@ -390,7 +398,38 @@ Object result = new TransactionTemplate(platformTransactionManager).execute(new 
     return result;
   }
 });
-````
+```
+
+在 `TransactionTemplate` 中，不需要关心事务本身，只需要使用 `connection` 完成 DB 操作，通过模板方法入参 `transactionStatus` 来反馈操作执行状态即可，事务的处理框架全部在 `execute` 方法中处理
+
+```java
+	public <T> T execute(TransactionCallback<T> action) throws TransactionException {
+		Assert.state(this.transactionManager != null, "No PlatformTransactionManager set");
+
+		if (this.transactionManager instanceof CallbackPreferringPlatformTransactionManager) {
+			return ((CallbackPreferringPlatformTransactionManager) this.transactionManager).execute(this, action);
+		}
+		else {
+			TransactionStatus status = this.transactionManager.getTransaction(this);
+			T result;
+			try {
+				result = action.doInTransaction(status);
+			}
+			catch (RuntimeException | Error ex) {
+				// Transactional code threw application exception -> rollback
+				rollbackOnException(status, ex);
+				throw ex;
+			}
+			catch (Throwable ex) {
+				// Transactional code threw unexpected exception -> rollback
+				rollbackOnException(status, ex);
+				throw new UndeclaredThrowableException(ex, "TransactionCallback threw undeclared checked exception");
+			}
+			this.transactionManager.commit(status);
+			return result;
+		}
+	}
+```
 
 ### 声明式事务管理 
 
@@ -461,15 +500,15 @@ protected Object invokeWithinTransaction(Method method, Class<?> targetClass, fi
 			throws Throwable {
 		// If the transaction attribute is null, the method is non-transactional.
 		// 获得Transaction的配置属性，TransactionAttribute是TransactionDefinition的拓展
-        // 可以通过rollbackOn针对一些特性的异常进行回滚或者不回滚
+    // 可以通过rollbackOn针对一些特性的异常进行回滚或者不回滚
 		final TransactionAttribute txAttr = getTransactionAttributeSource().getTransactionAttribute(method, targetClass);
-        // TransactionManager
+    // TransactionManager
 		final PlatformTransactionManager tm = determineTransactionManager(txAttr);
 		final String joinpointIdentification = methodIdentification(method, targetClass);
 
 		if (txAttr == null || !(tm instanceof CallbackPreferringPlatformTransactionManager)) {
 			// Standard transaction demarcation with getTransaction and commit/rollback calls.
-            // 创建一个事务，txInfo内部持有TransactionStatus
+      // 创建一个事务，txInfo内部持有TransactionStatus
 			TransactionInfo txInfo = createTransactionIfNecessary(tm, txAttr, joinpointIdentification);
 			Object retVal = null;
 			try {
@@ -479,15 +518,15 @@ protected Object invokeWithinTransaction(Method method, Class<?> targetClass, fi
 			}
 			catch (Throwable ex) {
 				// target invocation exception
-                // 异常回滚
+        // 异常回滚
 				completeTransactionAfterThrowing(txInfo, ex);
 				throw ex;
 			}
 			finally {
-                // 清理Transaction
+        // 清理Transaction
 				cleanupTransactionInfo(txInfo);
 			}
-            // 执行事务提交
+      // 执行事务提交
 			commitTransactionAfterReturning(txInfo);
 			return retVal;
 		}
@@ -499,7 +538,7 @@ protected Object invokeWithinTransaction(Method method, Class<?> targetClass, fi
 	}
 ````
 
-再通过`aop:advisor`织入到符合EL匹配到的类中，从而实现事务的管理。
+`invokeWithinTransaction` 中在方法调用前后插入事务管理，通过异常来进行事务控制，再通过`aop:advisor`织入到符合EL匹配到的类中，从而实现事务的管理。
 
 再看看`@Transactional`基于注解的声明式事务管理，
 
@@ -574,7 +613,35 @@ public static void configureAutoProxyCreator(Element element, ParserContext pars
 }
 ````
 
-太阳底下没有新鲜事，实际上只是讲xml中声明的对象，自动注册到BeanFactory中。
+太阳底下没有新鲜事，实际上只是将xml中声明的对象，自动注册到BeanFactory中。
+
+### 多线程中的事务管理
+
+前面提到 Spring 对事务的管理是基于 Connection 和线程上下文的绑定，核心类是 `TransactionSynchronizationManager`
+
+```java
+public abstract class TransactionSynchronizationManager {
+
+    private stati final Log logger = LogFactory.getLog(TransactionSynchronizationManager.class);
+
+    private static final ThreadLocal<Map<Object, Object>> resources = new NamedThreadLocal("Transactional resources");
+
+    private static final ThreadLocal<Set<TransactionSynchronization>> synchronizations = new NamedThreadLocal("Transaction synchronizations");
+
+    private static final ThreadLocal<String> currentTransactionName = new NamedThreadLocal("Current transaction name");
+
+    private static final ThreadLocal<Boolean> currentTransactionReadOnly = new NamedThreadLocal("Current transaction read-only status");
+
+    private static final ThreadLocal<Integer> currentTransactionIsolationLevel = new NamedThreadLocal("Current transaction isolation level");
+
+    private static final ThreadLocal<Boolean> actualTransactionActive = new NamedThreadLocal("Actual transaction active");
+
+}
+```
+
+`ThreadLocal` 变量是线程独享，如果我们在 A 线程开启事务，要在 B 线程提交，则会得到一个 `RuntimeException` , 另外 `Connection` 接口的实现可能是非线程安全的，比如 SQLServer ，我们也不应该在线程之间共享这个变量。
+
+如果有需要使用多线程来并发执行，需要单独开启事务，同时也因为 Spring 的事务管理是基于代理类实现的，如果需要在线程方法中使用事务，还必须使用独立的代理，而不是使用 this 方法，也就是说需要创建独立的 Bean 和带有 `@Transactional` 注解的方法
 
 ### 最佳实践
 

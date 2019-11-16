@@ -13,7 +13,7 @@ ZooKeeper是一个典型的分布式数据一致性的解决方案，分布式�
 
 从本质上，Zookeeper类似一个分布式的存储系统，通过以Leader-Followers的模式运行的集群来实现高可用。本文主要分析单机模式的zk的启动流程。
 
-![zk-start-diagram](http://i.imgur.com/X9BWilY.png)
+![zk-start-diagram](/postsimg/zookeeper/zk-start-diagram.png)
 
 #### 启动入口分析
 

@@ -9,7 +9,7 @@ description: Spring 拓展默认参数和动态刷新功能
 
 ### 拓展Spring的属性配置功能
 
-在工作中广泛地使用Spring framework，相比之前零散的配置文件管理和内部组件关系管理，Spring framework确实有大幅度的改进，但是在默认值和值动态更新两个方面，Spring并没有提供默认的支持，好在Spring本身提供了非常强大的拓展功能，让我们在不修改Spring框架的前提下，能够拓展支持这两项功能。
+在工作中广泛地使用 Spring framework，相比之前零散的配置文件管理和内部组件关系管理，Spring framework确实有大幅度的改进，但是在默认值和值动态更新两个方面，Spring并没有提供默认的支持，好在Spring本身提供了非常强大的拓展功能，让我们在不修改Spring框架的前提下，能够拓展支持这两项功能。
 
 #### 默认值
 
@@ -164,29 +164,29 @@ Spring 默认的`PropertyPlaceholderConfigurer`设计，刚才也已经提到，
 
 下面简要分析一下实现方式，
 
-为了动态加载properties，我们最容易想到的是下面这几个元素
+为了动态加载`properties`，我们最容易想到的是下面这几个元素
 
 1. 一个Factory Bean，当文件系统发生变化的时候，用于可以执行reload操作。
-2. 一个带有观察模式的Properties对象，当文件系统发生变化的时候，可以捕获和生成变化事件并发送给对应的监听器，实际的Properties委托给这个类进行代理，这样可以在内部直接使用`Properties`对象进行值管理的时候。
-3. 一个可以管理和记录placeholder到对应属性值的转换过程，记录placeholder/properties/spring bean之间的关系
-4. 一个监听器在properties发生更新的时候，进行spring bean的更新。
-5. 一个定时器，用于定时检查properties文件是否发生变化，并调用4对应的监听器，进行bean的更新
+2. 一个带有观察模式的`Properties`对象，当文件系统发生变化的时候，可以捕获和生成变化事件并发送给对应的监听器，实际的Properties委托给这个类进行代理，这样可以在内部直接使用`Properties`对象进行值管理的时候。
+3. 一个可以管理和记录 `placeholder` 到对应属性值的转换过程，记录 placeholder/properties/spring bean之间的关系
+4. 一个监听器在`properties`发生更新的时候，进行spring bean的更新。
+5. 一个定时器，用于定时检查`properties`文件是否发生变化，并调用4对应的监听器，进行bean的更新
 
-以上这三个类分别定义了可重载的Properties的创建、对象以及管理。
+以上这三个类分别定义了可重载的`Properties`的创建、对象以及管理。
 
-观察者和代理模式的实现，围绕着`ReloadableProperties`，`ReloadablePropertiesListener`，`PropertiesReloadedEvent`和`ReloadablePropertiesBase`实现，这几个类都是很普通的实现，监听器以及对应的处理，`DelegatingProperties`是一个abstract class覆盖了`Properties`类的所有方法并将其委托给自己的`delegate`内部对象进行操作，可以在properties发生变化的时候，动态地替换掉当前的properties.对properties的更新是一次性完成，因此应用不存在不一致的中间状态。
+观察者和代理模式的实现，围绕着`ReloadableProperties`，`ReloadablePropertiesListener`，`PropertiesReloadedEvent`和`ReloadablePropertiesBase`实现，这几个类都是很普通的实现，监听器以及对应的处理，`DelegatingProperties`是一个abstract class覆盖了`Properties`类的所有方法并将其委托给自己的`delegate`内部对象进行操作，可以在`properties`发生变化的时候，动态地替换掉当前的properties。对properties的更新是一次性完成，因此应用不存在不一致的中间状态。
 
-`ReloadablePropertiesFactoryBean`是用于创建`ReloadableProperties`实例的FactoryBean，完成和spring默认的PropertiesFactoryBean一样的工作。同时，当创建一个新的实例的时候，ReloadablePropertiesFactoryBean都检查所有的配置文件是否修改，如果修改过则会进行Properties的更新。
+`ReloadablePropertiesFactoryBean`是用于创建`ReloadableProperties`实例的FactoryBean，完成和spring默认的`PropertiesFactoryBean`一样的工作。同时，当创建一个新的实例的时候，`ReloadablePropertiesFactoryBean`都检查所有的配置文件是否修改，如果修改过则会进行Properties的更新。
 
 类结构
 
-![](http://ooi50usvb.bkt.clouddn.com/sprinreload.png)
+![cache](/postsimg/springreload/springreload.png)
 
 `ReloadablePropertiesBase`中实现添加和触发监听器，以及设置配置文件对象的入口。同时，在`ReloadablePropertiesFactoryBean`中定义了内部类`ReloadablePropertiesImpl`，其继承了`ReloadablePropertiesBase`，并实现了了`ReconfigurableBean`接口。FactoryBean创建Bean的时候，实际对象未`ReloadablePropertiesImpl`，当`ReloadablePropertiesImpl`进行`reloadConfiguration`的时候，则会调用FactoryBean的`reload`方法，从而触发整个配置文件更新的过程。
 
-ReloadingPropertyPlaceholderConfigurer是IReloadablePropertiesListener的实现类，同时也继承了PropertyPlaceholderConfigurer，它能够追踪placeholder的使用情况，当properties重新加载的时候，所有用到这些properties的bean会被发现，并重新刷新如bean中。在这个方法中使用了BeanFactoryPostProcessor，自定义了对BeanDefinition的解析过程，并在其中建立对整个BeanDefinition中的placeholder和properties的追踪链路。
+`ReloadingPropertyPlaceholderConfigurer`是`IReloadablePropertiesListener`的实现类，同时也继承了`PropertyPlaceholderConfigurer`，它能够追踪`placeholder`的使用情况，当`properties`重新加载的时候，所有用到这些`properties`的bean会被发现，并重新刷新如bean中。在这个方法中使用`了BeanFactoryPostProcessor`，自定义了对`BeanDefinition`的解析过程，并在其中建立对整个`BeanDefinition`中的`placeholder`和`properties`的追踪链路。
 
-`ReloadingPropertyPlaceholderConfigurer`作为`BeanFactoryPostProcessor`，在进行placeHolder进行`parseStringValue`调用的时候，完成对placeHolder和Spring Bean的绑定
+`ReloadingPropertyPlaceholderConfigurer`作为`BeanFactoryPostProcessor`，在进行`placeHolder`进行`parseStringValue`调用的时候，完成对`placeHolder`和Spring Bean的绑定
 
 ````java
 /**

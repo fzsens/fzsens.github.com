@@ -29,13 +29,13 @@ Canal Server模拟MySQL的Slave服务器，dump MySQL的binlog并解析成为事
 1. 应用程序从缓存中取值，如果值不存在，则从数据库中取值，并放入缓存中
 2. 应用程序更新数据库，更新成功之后，将对应的缓存设置为失效
 
-![cache](https://i.imgur.com/7AaNq93.png)
+![cache](/postsimg/canal/cache.png)
 
 这一种模式在缓存应用中大量使用，除了在少数情况下会出现数据库数据和缓存数据不一致的情况，大多数情况下都是实现缓存的best practice。
 
 这种模式也有一个变种，将更新事件封装为消息，直接投递到消息队列中，以提供给不同的消费方使用
 
-![cache-mq](https://i.imgur.com/zbeKf1h.png)
+![cache-mq](/postsimg/canal/cache-mq.png)
 
 引入MQ之后，将待缓存数据直接写入到MQ队列中，缓存服务器可以进行订阅消费，同时其他有需要的应用也可以通过订阅的消息的形式及时获取更新数据，这种构建模式，相比直接吸入Cache Server的模式，增加了更多的可能性。
 
@@ -45,8 +45,7 @@ Canal Server模拟MySQL的Slave服务器，dump MySQL的binlog并解析成为事
 
 如果研究Kafka以及MySQL的binlog，会发现其中有很多共同的地方，本质上都是作为日志，记录数据变更的过程。因此我们可以考虑是不是第二种构建缓存的模式，可以使用binlog来作为数据的来源。再结合Canal的功能和定位，我们可以将整体缓存架构设计为
 
-![](https://i.imgur.com/x2McRHc.png)
-![图片](img/_posts_images/canal/canal-cache.png)
+![canal-cache](/postsimg/canal/canal-cache.png)
 
 对比这种模式和第二种模式，会发现两者之间有很多类似的地方，只是MQ队列的位置被binlog和Canal取代。
 
@@ -135,7 +134,7 @@ public class CacheNode {
 在配置方面，为了便于解析，使用简单的YAML作为配置语言
 
 
-````yaml
+````yml
 !!com.qiongsong.manager.filter.SchemaFilter
 tables:
   xdual:

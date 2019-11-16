@@ -13,7 +13,7 @@ description: 动态代理中Annotation的继承管理和动态代理原理
 
 从上一篇分析中，我们已经可以得到，JDK Proxy生成的代理类为Proxy0，利用HSDB，从classes browser中可以将.class文件导出，通过procyon来进行反编译，得到内容如下
 
-````java
+```java
 
 package com.sun.proxy;
 
@@ -125,7 +125,7 @@ public final class $Proxy0
   }
 }
 
-````
+```
 
 从生成的代码中，可以很清楚看到
 
@@ -136,7 +136,7 @@ public final class $Proxy0
 
 再看一下`java.lang.reflect.Proxy.newProxyInstance(ClassLoader loader,Class<?>[] interfaces,InvocationHandler h)`接口定义，就很容易将JDK的动态代理过程理解清楚，同时当将`IProxyMe`的Method和Parameter Annotation去除之后，在新输出的中jdk proxy对应的
 
-````java
+```shell
 
 <<<<< ---- Invoking methods ----- >>>>>
 Type: class com.qiongsong.dynamic.ProxyTester$ProxyMe_$$_jvst813_0
@@ -181,7 +181,7 @@ Method: aMethod
 Invoked 4
 -----------------
 
-````
+```
 
 
 Method调用过程中也无法得到Annotation，因为其Method是从`IProxyMe`接口中获取的，而其他的代理对象，则依然可以正常获取到Annotation，可知在这块实现上各个动态代理框架的实现过程是不一样的。而`Class<?>[] interfaces`参数也限制了jdk proxy必须建立在接口的基础上，原因也很简单，当你extends Proxy之后，无法多重继承的Java，显然没有办法再继承代理实现类。
@@ -190,7 +190,7 @@ Method调用过程中也无法得到Annotation，因为其Method是从`IProxyMe`
 
 也正是因为jdk proxy的必须基于接口这个特点的限制，在没有办法确定所有的对象都有接口定义的情况下，我们会选择cglib来作为动态代理框架，cglib底层采用ASM字节码生成框架，使用字节码技术生成代理类，比使用jdk proxy的执行效率更高，但是生成会稍微慢一点。使用同样的方法提取.class，使用cglib生成的的内容会比较复杂，这边不对cglib的生成原理进行介绍，主要通过生成的字节码文件，来说明整个动态代理调用的过程。
 
-````java
+```java
 //不同jdk proxy，cglib使用了继承实现类，并实现接口的方式，因此cglib没有必须使用接口的限制，
 // 使用继承的方式，超类中标记为final的方法无法被override，因此cglib无法代理生成final方法
 public class ProxyTesterProxyMeEnhancerByCGLIB9b74e96c extends ProxyTesterProxyMe implements ProxyTester$IProxyMe, Factory {
@@ -486,9 +486,9 @@ public class ProxyTesterProxyMeEnhancerByCGLIB9b74e96c extends ProxyTesterProxyM
 }
                                                                                              
 
-````
+```
 
-从整体上讲，cglib的整个代理过程还是和jdk proxy比较接近的，利用高级的字节码技术，使得cglib比使用放射技术实现的jdk proxy更加灵活，在Annotation相关的操作中，因为使用了继承机制，因此cglib的类可以顺利继承TypeAnnotation，在Method和Parameter Annotation方面，则两者基本一样。在使用HSDB查看类的时候，会发现有三个类，其中`ProxyTester$ProxyMe$$FastClassByCGLIB$$c2d280aa.class` 和`ProxyTester$ProxyMe$$EnhancerByCGLIB$$9b74e96c$$FastClassByCGLIB$$67b37e23.class`为`MethodProxy`自动生成的FastCglib类，前者指向代理类，后者指向委托类，也就是说，如果MethodProxy调用`invokeSuper`，第二个参数，需要是代理类，则会直接`ProxyTester$ProxyMe$$EnhancerByCGLIB$$9b74e96c$$FastClassByCGLIB$$67b37e23.class`中的CGLIB$aMethod$0(final int n)，而如果调用`invoke`则会根据传入的参数，调用对应的`aMethod`方法，如果直接调用代理类，显然会导致`StackOverFlow`的错误。
+从整体上讲，cglib的整个代理过程还是和jdk proxy比较接近的，利用高级的字节码技术，使得cglib比使用放射技术实现的jdk proxy更加灵活，在`Annotation`相关的操作中，因为使用了继承机制，因此cglib的类可以顺利继承`TypeAnnotation`，在`Method`和`Parameter Annotation`方面，则两者基本一样。在使用HSDB查看类的时候，会发现有三个类，其中`ProxyTester$ProxyMe$$FastClassByCGLIB$$c2d280aa.class` 和`ProxyTester$ProxyMe$$EnhancerByCGLIB$$9b74e96c$$FastClassByCGLIB$$67b37e23.class`为`MethodProxy`自动生成的FastCglib类，前者指向代理类，后者指向委托类，也就是说，如果`MethodProxy`调用`invokeSuper`，第二个参数，需要是代理类，则会直接`ProxyTester$ProxyMe$$EnhancerByCGLIB$$9b74e96c$$FastClassByCGLIB$$67b37e23.class`中的`CGLIB$aMethod$0(final int n)`，而如果调用`invoke`则会根据传入的参数，调用对应的`aMethod`方法，如果直接调用代理类，显然会导致`StackOverFlow`的错误。
 
 > FastCglib的内部实现，是使用下标来标记方法，当进行调用的时候，通过方法签名获取下标，直接通过下标做直接调用，省去了反射的消耗
 

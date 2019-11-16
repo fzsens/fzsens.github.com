@@ -29,7 +29,7 @@ description: 对zookeeper leader-election的描述
 
 从大的流程看
 
-![main-fow](http://i.imgur.com/yYDNTgz.png)
+![main-fow](/postsimg/zkfastleader/main-fow.png)
 
 整个选举的核心流程在于`FastLeaderElection`如何通过`QuorumCnxManager`使用消息传递在集群中选举出唯一的Leader，之后跟新`QuorumPeer`的状态，并根据状态创建服务的对应服务。`FastLeaderElection`的这个功能和`Basic Paxos`非常的类似：在一个分布式集群中，通过消息通信达成一个确定的值，在这边这个值就是leader的服务器编号。下面以自顶向下的模式，分析整个启动和选举的实现细节。
 
@@ -175,7 +175,7 @@ while (running) {
 
 在开始分析选举流程之前，先对网络管理做一下介绍。zk为了保证消息传输的有序性，使用tcp作为传输层协议。主要的逻辑都在`QuorumCnxManager`中，`QuorumCnxManager`在内部维护了三个内部类来实现网络通信。
 
-![quorumCxnManager](http://i.imgur.com/husQBuL.png)
+![quorumCxnManager](/postsimg/zkfastleader/quorumCxnManager.png)
 
 QCM为本机和集群中的所有server维护了一个以sid为key，sendworker为value的`ConcurrentHashMap`：`senderWorkerMap`；以及sid为key，message列表为value的待发送`ConcurrentHashMap`：`queueSendMap`，一个用于存放本机接受到的消息的`ArrayBlockingQueue`：`recvQueue`。
 
@@ -189,7 +189,7 @@ QCM对外提供的读取和发送接口，都是异步完成的将需要发送�
 
 接下来分析一下`FastLeaderElection`的主要流程
 
-![leader-election-main](http://i.imgur.com/bJXh5t7.png)
+![leader-election-main](/postsimg/zkfastleader/leader-election-main.png)
 
 选举的入口为`lookForLeader`,整个大体流程并不难理解，先给自己投票即声明自己希望成为Leader并作为提案广播给集群内的其他server。集群内的机器刚开始都是平等的，因此其他机器也会做同样的事情，所以你既会发送消息，也会接受消息。实际上自己发送出去的消息，自己也会收到，在这边发送和接收完全可以独立出来认为是两个不同的角色，只是刚好是同一台机器。
 
@@ -204,7 +204,7 @@ QCM对外提供的读取和发送接口，都是异步完成的将需要发送�
 
 理清楚这几个主要的变量之后，进入LOOKING流程分析
 
-![looking](http://i.imgur.com/zSdaMxr.png)
+![looking](/postsimg/zkfastleader/looking.png)
 
 首先必须保证选举中的选票都必须在同一个轮次中投出，如果收到的消息轮次大于本机logicalclock，则将之前的选票丢弃，并修改本机logicalclock，相当于重新进行一次选举；如果小于的话，证明这个消息对应的服务器可能刚刚加入，直接丢弃即可，该服务器稍后就会收到本机广播出去的消息调整自己的logicalclock；对于轮次相等和大于的情况，还需要比较消息和本机提案的优先级，如果优先级高于本机，则将本机的提案内容修改为消息的提案内容，并在此对外广播提案。这里的优先级比较，隐含了zk选举的一个重要前提，就是选举出来的leader必须拥有所有server中最全的数据，也就是最大的zxid，因此zxid更高的消息，拥有更高的优先级。
 
@@ -259,7 +259,7 @@ if (n == null) {
 
 进入FOLLOWING和LEADING的流程分析
 
-![leading](http://i.imgur.com/3kFmCgy.png)
+![leading](/postsimg/zkfastleader/leading.png)
 
 有消息状态为FOLLOWING或者LEADING,表明在集群中已经选举达成了一致状态，因此本机的主要工作是校验，从接受到的消息中校验选举的有效性，校验的主要方法是
 
@@ -382,7 +382,7 @@ leader主要完成的工作
 * paxos主要用于状态机中的日志复制，强调只要每个节点上的log内容一致，即每一个副本上的内容和顺序一致，那么重放得到的最终状态一致。 
 * paxos，特指引入leader角色的multi paxos。为了提高让客户端能同时提交决议，举个例子，假设有27、28、29三个位置需要填充数据。paxos为了同时对这三个位置进行表决，引入了时间窗的概念，在一个时间窗内可以并行或者重叠提交多个提案，那自然可能部分提交成功部分提交失败的例子，新的leader选举之后，可以使用任意的顺序恢复之前的提案，paxos的目标只是保证各个副本的值是一致的，并不保证这些值逻辑上的顺序。
 
-![paxos-zab](http://i.imgur.com/GwKGsUN.png)
+![paxos-zab](/postsimg/zkfastleader/paxos-zab.png)
 
 > P1 P2 P3 分别作为不同阶段的Leader
 1. P1在Phase1对A1和A2发出 27<1a,1>，28<1a,1>的预提案，A1和A2此前没有接受过任何的值因此会保证不会再响应 ballot<1 的提案

@@ -1,13 +1,11 @@
 ---
 layout: post
-title: RPC 青铜时代——
-date: 2018-10-19
-categories: aqs
-tags: [java,aqs,juc]
-description: Java AbstractQueuedSynchronizer 详解
+title: RPC 青铜时代—— Flex BlazeDS 和 Spring Remoting
+date: 2019-05-10
+categories: rpc
+tags: [java,rpc]
+description: 系统间通信技术 blazeds 和 spring remoting
 ---
-
-# RPC 青铜时代
 
 #### 系统间交互
 

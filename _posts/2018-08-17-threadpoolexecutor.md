@@ -7,7 +7,7 @@ tags: [java]
 description: 分析Java线程池实现类ThreadPoolExecutor执行过程
 ---
 
-Java并发工具集（J.U.C)是开发中使用使用最多的功能之一，其主要的目的是简化Java并发程序的开发过程。其中使用最频繁的则要数线程池技术。还记得刚从事工作的时候，就参考《Thinking In Java》中的例子实现了在`ExecutorService`基础之上的文件并发处理程序，而且出乎我意料之外，现在还在生产环境上稳定运行。本文主要分析J.U.C中线程池的执行过程和工作原理，作为自己学习的一点总结，以下的版本基于JDK8进行分析。
+Java并发工具集（J.U.C)是开发中使用使用最多的功能之一，其主要的目的是简化Java并发程序的开发过程。其中使用最频繁的则要数线程池技术。还记得刚从事工作的时候，就参考《Thinking In Java》中的例子实现了在`ExecutorService`基础之上的文件并发处理程序，现在还在生产环境上稳定运行。本文主要分析J.U.C中线程池的执行过程和工作原理，作为自己学习的一点总结，以下的版本基于JDK8进行分析。
 
 首先线程池的核心功能在于使用可控数量的线程来执行一定数量的任务，可控数量的线程数量可以减少无谓的CPU调度开销，使用设计良好的API可以降低编写并发线程的难度。假如我们自己实现一个简陋的线程池，我们会怎么定义？
 
@@ -19,7 +19,7 @@ Java并发工具集（J.U.C)是开发中使用使用最多的功能之一，其�
 
 首先针对执行结果异步返回，将其设计为回调方式，提交任务后返回一个回调接口，等到实际要使用的时候，再调用`get`方法返回任务执行结果
 
-````java
+```java
 
 public interface Callback<T> {
 
@@ -72,13 +72,13 @@ public class FutureCallback<T> implements Callback<T>{
     }
 }
 
-````
+```
 
 代码实现非常简单，在`get`方法中使用`CountDownLatch`类堵塞等待返回值到来。
 
 然后实现核心的线程池，遵循在分析阶段做的定义，具体实现如下
 
-````java
+```java
 
 public class Executors {
 
@@ -136,11 +136,11 @@ public class Executors {
     }
 }
 
-````
+```
 
 `workers`用于存储执行线程，为了简化代码，在线程池创建的时候，就执行实例化并启动线程，然后将其放入`workers`集合中，每一个执行线程在一个`while`循环体内，不停地尝试从任务队列`taskQueue`中获取任务，由于`ArrayBlockingQueue`的`poll`方法提供锁保护机制，因此一个任务不会被多个执行线程消费，当获取到任务后，直接在执行线程中运行任务的`call`方法，并根据执行结果，回写到`FutureCallback`中。当提交任务的时候，实例化一个`FutureCallback`对象，并和任务一起封装在`CallbackTask`中，以便提供异步返回的功能。最后调用的客户端得到`FutureCallback`实例，可以从中获得执行结果。
 
-````java
+```java
 
     Executors executors = new Executors(4, 100);
     List<FurtureCallback<String>> callbackList = new ArrayList<>();
@@ -172,11 +172,11 @@ public class Executors {
         }
     }
     LOG.info("Complete");
-````
+```
 
 为了模型线程的处理，在每个待执行任务中等待一秒钟，为了限制系统系统使用的线程数量，我们采用4个线程来执行200个任务，并且线程池中最多同时放100个任务，由于`ArrayBlockingQueue`的特性，超出队列限制的提交动作会被堵塞直到队列有空闲，这可能并非一个最优的做法，后续在分析JUC中的线程池实现的时候，会看到它是采用了一个拒绝的策略。运行之后，可以看到大约在50s后线程池运行完毕所有的200个任务。到此在我们实现的这个简单的线程中，已经能够实现线程池的核心功能。接下来让我们分析一下JUC中线程池中的实现。
 
-````java
+```java
 
     ExecutorService executor = new ThreadPoolExecutor(4, 8, 50, TimeUnit.SECONDS, new ArrayBlockingQueue<>(200));
     List<Future<String>> callbackList = new ArrayList<>();
@@ -208,7 +208,7 @@ public class Executors {
             }
         }
         LOG.info("Complete");
-````
+```
 
 在这边采用`ThreadPoolExecutor`作为具体的线程池实例化对象，可以看到除了实现类之外，和我们自定义的线程池的运行时表现行为是一致的。下面我们以`ThreadPoolExecutor`类为起点，逐步分析JUC中线程池的实现机制。在我们选择的构造函数中使用了五个参数依次分别为
 
@@ -225,7 +225,7 @@ public class Executors {
 
 这边就是`ThreadPoolExecutor`的主要核心对象，望文生义，我们也可以猜测到线程池内部的一些实现机制。参数1、2限制线程池数量，参数3，4用于空闲线程回收，参数5保存用户提交的任务，参数6是线程池初始化线程的工厂类，参数7用于任务队列满时候的处理，完整的构造函数如下  
 
-````java
+```java
     
     public ThreadPoolExecutor(int corePoolSize,
                               int maximumPoolSize,
@@ -249,11 +249,11 @@ public class Executors {
         this.handler = handler;
     }
 
-````
+```
 
 这里并没有直接初始化线程，而只是初始化了参数，与我们自己实现的线程池对比，显然这种延迟初始化的方式，对于资源的利用方面更胜一筹。接下来看看`ThreadPoolExecutor`的类继承结构
 
-![ThreadPoolExecutor](http://ooi50usvb.bkt.clouddn.com/_threadpool_1534388286_22595.png) 
+![ThreadPoolExecutor](/postsimg/threadpoolexecutor/_threadpool_1534388286_22595.png) 
 
 [图片来源](http://www.infoq.com/cn/articles/executor-framework-thread-pool-task-execution-part-01#)
 
@@ -263,7 +263,7 @@ public class Executors {
 
 当调用`Future<String> callback = executor.submit(task);`向线程池中提交一个任务之后
 
-````java
+```java
 
     protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
         return new FutureTask<T>(callable);
@@ -276,11 +276,11 @@ public class Executors {
         return ftask;
     }
 
-````
+```
 
 提交的`Callable`被封装入`FutureTask`中，这里的`FutureTask`与我们定义的`FutureCallback`有类似之处，不过`FutureCallback`值定义了异步获取返回值的方法，而`FutureTask`除了可以异步获取返回值之外，还定义了开始和取消计算的方法。并且与`FutureCallback`不同的是，为了能够取消正在执行的任务，`FutureTask`使用一个状态`state`变量用于表示任务的执行过程。
 
-````java
+```java
 
     private volatile int state;
     private static final int NEW          = 0;
@@ -291,7 +291,7 @@ public class Executors {
     private static final int INTERRUPTING = 5;
     private static final int INTERRUPTED  = 6;
 
-````
+```
 
 任务的初始状态为`NEW`，`COMPLETING`为运行完成到设置输出值的中间状态，当任务的执行线程被设置中断时状态修改为`INTERRUPTING`，当执行线程已经被中断时设置为`INTERRUPTED`，当执行线程被取消时设置为`CANCELLED`，当线程发生异常时则为`EXCEPTIONAL`，如果执行线程顺利完成任务的计算则状态设置为`NORMAL`，此时可以获取返回值。一个`FutureTask`的可能状态迁移路径如下
 
@@ -302,7 +302,7 @@ public class Executors {
 
 > 在JDK6的时候，`FutureTask`使用`AbstractQueuedSynchronizer`的同步器进行状态的控制，在JDK8中改为使用下面的状态机控制机制。
 
-````java
+```java
 
     public void run() {
         if (state != NEW ||
@@ -352,13 +352,13 @@ public class Executors {
         }
     }
 
-````
+```
 
 执行的方法很简单，首先通过`UNSAFE`的`CAS`方法判断当前的任务是否正在被执行，如果尚未被执行，然后使用当前线程作为任务的执行线程，这个判断可以保证任务在不会被并发执行。直接调用`Callable`的`call`方法将其结果作为返回值，设置到`outcome`中，并调用`finishCompletion`完成运行。
 
 >因为`Callable`本身即为带有返回值的任务，因此直接使用其方法的返回值作为计算结果即可，如果是`Runnable`则返回空，或者返回`submit`任务时候指定的返回值。在`FutureTask`中`Runnable`都会被使用`RunnableAdapter`适配器转换成为`Callable`进行执行。
 
-````java
+```java
     public boolean cancel(boolean mayInterruptIfRunning) {
         if (!(state == NEW &&
               UNSAFE.compareAndSwapInt(this, stateOffset, NEW,
@@ -379,11 +379,11 @@ public class Executors {
         }
         return true;
     }
-````
+```
 
 如果取消传入的参数为`true`，意味着直接中断任务的执行，则调用执行线程的`interrupt`方法，并将任务的状态设置为`INTERRUPTED`，中断之后会回到`run`方法中的异常处理。如果为`false`，则允许已经在运行的任务完成运算，并将状态设置为`CANCELLED`，如果这个任务尚未开始运算，则永远不会被执行。
 
-````java
+```java
 
     public V get(long timeout, TimeUnit unit)
         throws InterruptedException, ExecutionException, TimeoutException {
@@ -397,11 +397,11 @@ public class Executors {
         return report(s);
     }
 
-````
+```
 
 获取最后的结果值，当`state`的状态小于等于`COMPLETING`，也就是任务尚未执行完成的时候，调用`awaitDone`进入等待状态，等待超时后抛出超时异常。
 
-````java
+```java
 
     private int awaitDone(boolean timed, long nanos)
         throws InterruptedException {
@@ -443,19 +443,19 @@ public class Executors {
         }
     }
 
-````
+```
 
 在这边有一个`WaitNode`类，对应到`FutureTask`中的`private volatile WaitNode waiters;`，`waiters`中用了`Trieber Stack`来保存等待结果的线程。
 
 >`Trieber Stack`是使用`CAS`技术的无锁并发栈，通过对已有栈的栈顶元素进行`CAS`比较，实现对出入栈的并发控制，`Trieber Stack`无法解决`ABA`问题，详细可参考[Wikipedia Trieber Stack](https://en.wikipedia.org/wiki/Treiber_Stack)
 
-````java
+```java
     static final class WaitNode {
         volatile Thread thread;
         volatile WaitNode next;
         WaitNode() { thread = Thread.currentThread(); }
     }
-````
+```
 
 当一个获取结果的线程（注意和执行线程区分开），调用`FutureTask`的`get`方法，会创建一个`WaitNode`节点`q`，并在调用`UNSAFE.compareAndSwapObject(this, waitersOffset, q.next = waiters, q)`，这段代码原子性地完成几件事情
 
@@ -465,7 +465,7 @@ public class Executors {
 
 然后使用`LockSupport.park`进行等待状态，如果等待超时，则调用`removeWaiter`移除当前创建的`WaitNode`节点
 
-````java
+```java
 
     private void removeWaiter(WaitNode node) {
         if (node != null) {
@@ -496,13 +496,13 @@ public class Executors {
         }
     }
 
-````
+```
 
 `removeWaiter`方法的主要作用是，清理无效的`WaitNode`节点，这些无效的节点主要由于中断或者超时导致的。
 
 当任务最后执行完成的时候，就需要通过`waiters`来唤醒调用`Future.get()`等待任务执行结果的线程
 
-````java
+```java
 
     private void finishCompletion() {
         // assert state > COMPLETING;
@@ -527,7 +527,7 @@ public class Executors {
         callable = null;        // to reduce footprint
     }
 
-````
+```
 
 `LockSupport.unpark(t)`方法，唤醒在等待执行结果的线程。并清理对应的节点。
 
@@ -535,8 +535,7 @@ public class Executors {
 
 在分析执行过程之前，首先看下`ThreadPoolExecutor`中对于线程池状态以及线程数量的处理策略
 
-````
-
+```java
     private final AtomicInteger ctl = new AtomicInteger(ctlOf(RUNNING, 0));
     private static final int COUNT_BITS = Integer.SIZE - 3;
     private static final int CAPACITY   = (1 << COUNT_BITS) - 1;
@@ -552,11 +551,11 @@ public class Executors {
     private static int runStateOf(int c)     { return c & ~CAPACITY; }
     private static int workerCountOf(int c)  { return c & CAPACITY; }
     private static int ctlOf(int rs, int wc) { return rs | wc; }
-````
+```
 
 从这里可以看到，`ThreadPoolExecutor`使用原子变量`ctl`的前四位存储线程池的状态五个运行状态，后二十八位存储工作线程数量。当需要获取线程状态时候，调用`runStateOf(int c)`，当需要获取工作线程数量时，调用`workerCountOf(int c)`。
 
-````java
+```java
 
     public void execute(Runnable command) {
         if (command == null)
@@ -578,7 +577,7 @@ public class Executors {
             reject(command);
     }
 
-````
+```
 
 `execute`方法是`ThreadPoolExecutor`中执行任务的纲要
 
@@ -588,7 +587,7 @@ public class Executors {
 
 从整个过程中可以看到`new ThreadPoolExecutor(4, 8, 50, TimeUnit.SECONDS, new ArrayBlockingQueue<>(200))`创建的线程池，最多可以添加208个任务，其中4个正在运行中，200个处于任务队列中。
 
-````java
+```java
 
     private boolean addWorker(Runnable firstTask, boolean core) {
         retry:
@@ -619,11 +618,11 @@ public class Executors {
         ......// 第二部分
     }
 
-````
+```
 
 `addWorker`主要的任务是添加并启动一个工作线程，第一部分，先判断线程的状态是否允许添加对应的工作线程，如果允许则调用`compareAndIncrementWorkerCount`增加工作线程数量，在这边同样使用`CAS`技术，避免在检测过程中工作线程数量的变化导致的不一致。
 
-````java
+```java
 
      private boolean addWorker(Runnable firstTask, boolean core) {
         .......// 第一部分
@@ -683,12 +682,12 @@ public class Executors {
             mainLock.unlock();
         }
     }
-````
+```
 
 `addWorker`的第一部分实现检验并增加工作线程数量，第二部分则为实例化工作线程，添加到工作线程集合中，并调用`t.start()`运行工作线程，由于`t`在`Worker`中通过`getThreadFactory().newThread(this)`构造，实际上也就是调用`Worker`的`run`方法。如果添加失败，则减少工作线程的数量，并尝试终止线程池运行。
 
 
-````java
+```java
 
     public void run() {
        runWorker(this);
@@ -741,11 +740,11 @@ public class Executors {
             processWorkerExit(w, completedAbruptly);
         }
     }
-````
+```
 
 首先执行`Worker`的初始任务，然后循环从任务队列中获取任务，并执行对应任务的`run`方法，注意这里实际上是对应的`FutureTask`中的`run`方法，并非是`start`，如果是`start`则是新启动一个线程，并不适用与这个场景，`Worker`本身就是一个可以独立运行的线程，无需在启动一个一对一的`FutrureTask`线程。
 
-````java
+```java
 
     private Runnable getTask() {
         boolean timedOut = false; // Did the last poll() time out?
@@ -788,7 +787,7 @@ public class Executors {
         }
     }
 
-````
+```
 
 `getTask()`方法的主要作用是从工作队列中获取任务，如果其返回`null`，则会跳出`runWorker`中的`while`循环，并退出对应的工作线程。出现返回`null`的情况有如下几种
 
@@ -797,7 +796,7 @@ public class Executors {
 3. 线程池属于`SHUTDOWN`状态，并且任务队列为空
 4. 工作线程等待任务超时，并且超时的工作线程满足：`allowCoreThreadTimeOut || workerCount > corePoolSize`，也就是核心工作线程允许超时回收或者当前工作线程数量大于核心线程数量；并且当任务队列不为空的时候，当前的工作线程不能线程池中的最后一个工作线程。也就是保证最少有一个工作线程可以执行任务队列中的任务。
 
-````java
+```java
 
     private void processWorkerExit(Worker w, boolean completedAbruptly) {
         if (completedAbruptly) // If abrupt, then workerCount wasn't adjusted
@@ -831,11 +830,11 @@ public class Executors {
         }
     }
 
-````
+```
 
 `processWorkerExit`主要的功能是回收工作线程，首先从`workers`集合中移除对应的工作线程；然后调用`tryTerminate()`尝试终止线程池；如果线程池的状态为`RUNNING`或者`SHUTDOWN`，还需要保证任务队列的任务会被顺利执行。
 
-````java
+```java
 
     final void tryTerminate() {
         for (;;) {
@@ -870,14 +869,14 @@ public class Executors {
         }
     }
 
-````
+```
 
 在出现下面情况的时候，不做额外的处理直接返回
 1. 如果线程池还在运行
 2. 线程池处于`TIDYING`或者`TERMINATED`状态，说明任务线程已经都关闭了，不需要再处理
 3. 线程池处于`SHUTDOWN`并且任务队列不为空，根据状态定义，还需要等待任务队列中的任务被处理完毕，才允许关闭线程池
 
-````java
+```java
 
     private void interruptIdleWorkers(boolean onlyOne) {
         final ReentrantLock mainLock = this.mainLock;
@@ -903,13 +902,13 @@ public class Executors {
         }
     }
 
-````
+```
 
 `interruptIdleWorkers(ONLY_ONE)`每次只中断一个空闲的工作线程，并且中断的工作线程并非一定是调用`tryTerminate`的工作线程，而是`workers`队列中最新的工作线程，不过这并不影响最后所有的工作线程都会被一对一关闭。
 
 最后当所有的`workers`中的工作线程都被回收，并且任务队列为空，线程池处于`SHUTDOWN`状态，则将线程池状态修改为`TIDYING`，并且调用`terminated()`默认实现是一个空方法，最后将线程池状态设置为`TERMINATED`并唤醒调用线程池`awaitTermination()`的等待线程。
 
-````java
+```java
 
     public boolean awaitTermination(long timeout, TimeUnit unit)
         throws InterruptedException {
@@ -928,11 +927,11 @@ public class Executors {
             mainLock.unlock();
         }
     }
-````
+```
 
 `awaitTermination`等待`termination`竞态条件的唤醒
 
-````java
+```java
 
     public void shutdown() {
         final ReentrantLock mainLock = this.mainLock;
@@ -1001,7 +1000,7 @@ public class Executors {
         return taskList;
     }
 
-````
+```
 
 `shutdownNow`线程池的关闭方法，首先尝试修改线程池状态为`STOP`，然后调用`interruptWorkers()`中断所有的工作线程，`drainQueue`将剩余未执行的任务，从任务队列中移除返回。
 

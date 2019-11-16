@@ -64,7 +64,7 @@ EPF的核心是定义从L1到L5的五级流程，其中L1-L4为流程模块，L5
 
 一个完整的L1到L5级流程示例如下
 
-![efp](http://ooi50usvb.bkt.clouddn.com/_efp_1534822300_2275.png)
+![efp](/postsimg/epf/_efp_1534822300_2275.png)
 
 具体在做流程建模的时候，也可以根据实际的业务特征进行缩减，例如没有L1和L2。
 
@@ -104,17 +104,17 @@ EPF的核心是定义从L1到L5的五级流程，其中L1-L4为流程模块，L5
 
 ## 总体建设方法
 
-![fivestep](http://ooi50usvb.bkt.clouddn.com/_fivestep_1534821901_26289.png)
+![fivestep](/postsimg/epf/_fivestep_1534821901_26289.png)
 
 ### 梳理业务模式及场景
 
-![vision](http://ooi50usvb.bkt.clouddn.com/_vision_1534833075_6154.png)
+![vision](/postsimg/epf/_vision_1534833075_6154.png)
 
 宏观的供应链包括：计划、采购、生产、仓储、运输、退货等各个环节，每一个环节都对应一个业务模式，一般可以直接参考行业划分。
 
 不同企业的特殊性，在于上下游涉及到诸多参与者，会针对差异化经营指定不同的业务规则，以及其他影响业务模式的因素。
 
-![pattern](http://ooi50usvb.bkt.clouddn.com/_pattern_1534832306_4664.png)
+![pattern](/postsimg/epf/_pattern_1534832306_4664.png)
 
 在仓储这个业务模型下，有存在N个影响业务场景的维度，识别这些业务维度，可以划分出不同的业务场景，在梳理业务场景这个领域，则要重点关注，企业的主营业务方向，按照客户类型、产品类型、销售渠道、服务分类、人员分工等等进行划分，只要会影响业务场景，而且无法合并的因素都可以作为区分维度。
 
@@ -126,7 +126,7 @@ EPF的核心是定义从L1到L5的五级流程，其中L1-L4为流程模块，L5
 
 **流程架构**
 
-![template](http://ooi50usvb.bkt.clouddn.com/_template_1534833694_16684.png)
+![template](/postsimg/epf/_template_1534833694_16684.png)
 
 流程架构，不能和系统的功能菜单划等号，它表达的是业务场景，以及业务场景的分成和分类，分别对应L1到L4流程。
 
@@ -134,7 +134,7 @@ EPF的核心是定义从L1到L5的五级流程，其中L1-L4为流程模块，L5
 
 **成熟度对标**
 
-![maturecompare](http://ooi50usvb.bkt.clouddn.com/_maturecomp_1534833762_16897.png)
+![maturecompare](/postsimg/epf/_maturecomp_1534833762_16897.png)
 
 - 绿色：流程很成熟
 - 黄色：有流程，但是成熟度不高，需要优化
@@ -144,7 +144,7 @@ EPF的核心是定义从L1到L5的五级流程，其中L1-L4为流程模块，L5
 
 **信息化分析**
 
-![infoanalysis](http://ooi50usvb.bkt.clouddn.com/_infoanalys_1534834478_9189.png)
+![infoanalysis](/postsimg/epf/_infoanalys_1534834478_9189.png)
 
 - 绿色：强依赖，只能在系统中完成操作
 - 黄色：一般依赖，人工操作和系统操作协同，或者需要再系统中登记和录入信息
@@ -152,7 +152,7 @@ EPF的核心是定义从L1到L5的五级流程，其中L1-L4为流程模块，L5
 
 **流程架构信息化分布分析**
 
-![itdistrub](http://ooi50usvb.bkt.clouddn.com/_itdistrub_1534834970_11673.png)
+![itdistrub](/postsimg/epf/_itdistrub_1534834970_11673.png)
 
 - 绿色：ABC系统
 - 黄色：EFG系统
@@ -161,7 +161,7 @@ EPF的核心是定义从L1到L5的五级流程，其中L1-L4为流程模块，L5
 
 **IT系统支撑优先级分析**
 
-![support](http://ooi50usvb.bkt.clouddn.com/_support_1534835944_8267.png)
+![support](/postsimg/epf/_support_1534835944_8267.png)
 
 在实践中，一般重心都集中在对IT系统以来程度高的部分，在制定计划时，主要的关注点应该在成熟度较低的部分，因为其可能是系统实施的潜在风险点
 
@@ -182,7 +182,7 @@ L4流程是对业务要完成功能的总结
 
 例如：
 
-![L4ability](http://ooi50usvb.bkt.clouddn.com/_l4ability_1534860248_82073205.png)
+![L4ability](/postsimg/epf/_l4ability_1534860248_82073205.png)
 
 ### L4流程串联
 
@@ -190,15 +190,15 @@ L4流程串联的目的是要表达，流程要达到的目的和结构，体现
 
 L2高阶串联
 
-![L2](http://ooi50usvb.bkt.clouddn.com/_l2_1534839509_5337.png)
+![L2](/postsimg/epf/_l2_1534839509_5337.png)
 
 L3高阶串联
 
-![L3](http://ooi50usvb.bkt.clouddn.com/_l3_1534839565_8986.png)
+![L3](/postsimg/epf/_l3_1534839565_8986.png)
 
 L4串联
 
-![L4](http://ooi50usvb.bkt.clouddn.com/_l4_1534839729_20361.png)
+![L4](/postsimg/epf/_l4_1534839729_20361.png)
 
 在L4串联中，一般能够发现一些作业环节衔接的问题，这时候应该做整体的拉通，解决这些冲突，并添加文字说明。
 
@@ -220,7 +220,7 @@ L5流程是承载业务落地和IT系统实施的基础，从概念上，L5流�
 4. 时间：活动发生的时间，顺序
 5. 活动：流程中的行为列表和行为的结果
 
-![L5](http://ooi50usvb.bkt.clouddn.com/_l5_1534842011_15503.png)  
+![L5](/postsimg/epf/_l5_1534842011_15503.png)  
 
 ## 总结
 

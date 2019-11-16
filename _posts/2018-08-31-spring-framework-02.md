@@ -19,7 +19,7 @@ description: Spring应用架构分析
 
 首先是整体IoC容器的接口结构
 
-![beanfactory](/postsimg/spring/_beanfactor_1535335071_7572.png)
+![beanfactory](/postsimg/spring/beanfactor-1535335071-7572.png)
 
 从上图可以看出，IoC容器的基础类型是`BeanFactory`，并以它为基础，根据不同的场景，拓展出不同的接口实现，
 
@@ -43,7 +43,7 @@ description: Spring应用架构分析
 
 IoC容器除了获取之外，另一个功能就是注册
 
-![registry](/postsimg/spring/_registry_1535340170_21172.png)
+![registry](/postsimg/spring/registry-1535340170-21172.png)
 
 注册也分成两个部分
 1. SingletonBeanRegistry 是Bean的注册，目的是将Bean实例注册容器中，可以在多个使用者之间提供对象共享，一般只针对共享的单例，而对于`Prototype`的Bean，每次请求都会重新生成，因为不需要共享，因此也不需要注册。
@@ -85,11 +85,11 @@ IoC容器除了获取之外，另一个功能就是注册
 
 其中`DefaultListableBeanFactory`是上面第一条线的默认实现，也是最常见的`BeanFactory`实现之一
 
-![defaultListable](/postsimg/spring/_defaultlis_1535346983_25647.png)
+![defaultListable](/postsimg/spring/defaultlis-1535346983-25647.png)
 
 可以看出，`DefaultListableBeanFactory`同时具有`Registry`和`BeanFactory`的身份。`XmlBeanDefinitionReader`则是从XML文件中读取配置，解析成为`BeanDefinition`的工具类。
 
-![BeanDefinition](/postsimg/spring/_beandefini_1535347621_18718.png)
+![BeanDefinition](/postsimg/spring/beandefini-1535347621-18718.png)
 
 `BeanDefinition`的详细定义如上图，比较需要关注的有
 1. scope：定义Bean的作用域，默认为单例（Singleton）
@@ -140,10 +140,10 @@ IoC容器除了获取之外，另一个功能就是注册
 
         if (this.delegate.isDefaultNamespace(root)) {
             // 使用profile，按照不同的环境，定义需要加载的内容，实现类似Maven或者Spring Boot中Profile的功能
-            String profileSpec = root.getAttribute(PROFILE_ATTRIBUTE);
+            String profileSpec = root.getAttribute(PROFILE-ATTRIBUTE);
             if (StringUtils.hasText(profileSpec)) {
                 String[] specifiedProfiles = StringUtils.tokenizeToStringArray(
-                        profileSpec, BeanDefinitionParserDelegate.MULTI_VALUE_ATTRIBUTE_DELIMITERS);
+                        profileSpec, BeanDefinitionParserDelegate.MULTI-VALUE-ATTRIBUTE-DELIMITERS);
                 if (!getReaderContext().getEnvironment().acceptsProfiles(specifiedProfiles)) {
                     return;
                 }
@@ -184,18 +184,18 @@ IoC容器除了获取之外，另一个功能就是注册
     }
 
     private void parseDefaultElement(Element ele, BeanDefinitionParserDelegate delegate) {
-        if (delegate.nodeNameEquals(ele, IMPORT_ELEMENT)) {
+        if (delegate.nodeNameEquals(ele, IMPORT-ELEMENT)) {
             // 解析import进来的XML
             importBeanDefinitionResource(ele);
         }
-        else if (delegate.nodeNameEquals(ele, ALIAS_ELEMENT)) {
+        else if (delegate.nodeNameEquals(ele, ALIAS-ELEMENT)) {
             processAliasRegistration(ele);
         }
-        else if (delegate.nodeNameEquals(ele, BEAN_ELEMENT)) {
+        else if (delegate.nodeNameEquals(ele, BEAN-ELEMENT)) {
             // 解析 bean 节点
             processBeanDefinition(ele, delegate);
         }
-        else if (delegate.nodeNameEquals(ele, NESTED_BEANS_ELEMENT)) {
+        else if (delegate.nodeNameEquals(ele, NESTED-BEANS-ELEMENT)) {
             // recurse 递归
             doRegisterBeanDefinitions(ele);
         }
@@ -245,7 +245,7 @@ IoC容器除了获取之外，另一个功能就是注册
 
 以上的流程可以用下面的时序图说明
 
-![schedule](/postsimg/spring/_schedule_1535354686_2653.png)
+![schedule](/postsimg/spring/schedule-1535354686-2653.png)
 
 > 这边需要拓展一下，在上面流程的`parseBeanDefinitions`中的`delegate.parseCustomElement(root);`方法，是用户自定义标签的入口。也是Spring其他模块自定义标签的入口。当XML中的元素，不是使用默认命名空间的时候，就会使用类似`Java SPI`的方式，默认在`"META-INF/spring.handlers"`下查找对应的标签解析器，对自定标签进行解析。
 
@@ -518,7 +518,7 @@ IoC容器除了获取之外，另一个功能就是注册
                 }
             }
         }
-        return (singletonObject != NULL_OBJECT ? singletonObject : null);
+        return (singletonObject != NULL-OBJECT ? singletonObject : null);
     }
 
 ````
@@ -697,9 +697,9 @@ IoC容器除了获取之外，另一个功能就是注册
 
 整体的时序图可以概况如下
 
-![](/postsimg/spring/_1535386737_1874883956.png)
+![](/postsimg/spring/1535386737-1874883956.png)
 
-![](/postsimg/spring/_1535386777_1995460864.png)
+![](/postsimg/spring/1535386777-1995460864.png)
 
 
 ### ApplicationContext
@@ -789,7 +789,7 @@ IoC容器除了获取之外，另一个功能就是注册
 
 另一个是`BeanWrapper`机制，在IoC容器这种应用场景下，最直接使用对Bean实例设值的就是使用反射，但是直接使用放射，需要按照方法名来触发发射方法，同时这意味着Bean需要处理来自核心反射包的异常，所以异常处理会变得很笨拙，因此引入一个更高级别的抽象`BeanWrapper` 和默认的实现 `BeanWrapperImpl`
 
-![beanwrapper](/postsimg/spring/_beanwrappe_1535384908_520068175.png)
+![beanwrapper](/postsimg/spring/beanwrappe-1535384908-520068175.png)
 
 其中最终设置实例的属性值的方法位于`AbstractNestablePropertyAccessor`的`setPropertyValues`方法，并将所有的反射方法异常都封装未`BeansException`，这是一个`RuntimeException`，不强制用户捕获。显然这种设计是正确的，因为这个阶段发生的异常，一般直接影响到了`Bean`的初始化，这种致命的错误，通常程序无法自动恢复，强制用户捕获和处理这些异常，只会增加代码的复杂度。
 

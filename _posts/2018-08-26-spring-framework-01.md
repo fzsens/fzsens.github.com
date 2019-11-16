@@ -82,7 +82,7 @@ Spring的设计背景是在重量级的EJB开发模式，统治J2EE开发的时�
 
 因此，Spring是一个完整的应用框架，它可以在很多应用层面发挥作用，Spring由多个子框架组成，而且这些框架都相对独立。开发者可以选择使用其中的一部分，而不会引入过多无用的依赖。
 
-![springRuntime](/postsimg/spring/_springrunt_1535287847_1922089646.png)
+![springRuntime](/postsimg/spring/springrunt-1535287847-1922089646.png)
 
 - Beans工厂：Spring轻量级IoC容器能够配置、装配JavaBean和大多数普通Java对象，使得开发者不必定制Singleton和自己的配置机制。Spring提供了多个即拿即用的功bean工厂实现。
 - 应用上下文：Application Context 是对bean 工厂的拓展，它在bean工厂的基础上增加了对信息源、资源加载以及事件机制的支持，并提供了接入现有系统环境的能力，Sprign同样提供了一些现成的实现。

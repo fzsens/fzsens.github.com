@@ -93,17 +93,17 @@ Caller -> AOP Proxy -> Advisor(Inteceptor-1) -> Advisor(Inteceptor-2) -> Target 
 
 1. Java动态代理：最常见的策略是使用JDK的动态代理，更多详细的内容可以参考[注解和动态代理](https://fzsens.github.io/java/2017/06/14/internal-java-annotation-inherited-proxy-1/)
 2. 动态字节码生成：典型的是使用cglib，作为动态代码生成的框架，因为JDK动态代理只适用于基于接口的代理，如果需要针对类，就需要使用cglib。更多详细的内容可以参考[注解和动态代理](https://fzsens.github.io/java/2017/06/14/internal-java-annotation-inherited-proxy-1/)
-![jdkcglib](/postsimg/spring/_jdkcglib_1535525568_15745.png)
+![jdkcglib](/postsimg/spring/jdkcglib-1535525568-15745.png)
 3. Java代码生成：对目标对象生成新的Java代码，在其中执行横切代码，由于动态代理和动态字节码生成技术的出现，这种方法逐渐退出历史舞台
 4. 使用定制的类加载器：利用Java类加载机制的可拓展性，通过定制一个类加载器，可以在一个类被加载的时候自动对其进行增强，当用户使用new 构造符构建实例，增强会生效。JBoss采用这种做法对Java类进行增强，增强信息可以在运行时从XML中读取。这种做法的缺点在于，这会导致对类加载体系的依赖
 5. 语言拓展：AspectJ为代表，对现有的OOP语言进行拓展，引入AOP的概念，AspectJ提供自己的编译器和语法，相当于是引入了一门新的变成语言，学习曲线比较高
-![aspectJ](/postsimg/spring/_aspectj_1535524792_20347.png)
+![aspectJ](/postsimg/spring/aspectj-1535524792-20347.png)
 
 ## Spring的选择
 
 ，AOP在J2EE应用中的价值，大多体现在方法拦截上，只要有一个富有表现力的切入点模型即可，纯Java的框架足以满足这一需求。因此Spring提供的AOP框架和Spring的IoC容器结合，并利用AspectJ定义的AOP接口簇。利用`JDK动态代理`和`动态字节码生成`技术，实现AOP代理，而不依赖于AspectJ的编译器，从做到功能和独立性的平衡。你也可以在IoC容器之外使用AOP框架，但是将两者结合在一起，增强、增强器、切入点都是`Bean`，这符合Spring的设计原则——从容器中获取业务对象，从而获得良好的应用接口。在前面提到的`BeanPostProcessor`机制，也对简化AOP的配置过程非常有帮助。
 
-![](/postsimg/spring/_1535535709_9589.png)
+![](/postsimg/spring/1535535709-9589.png)
 
 ### 设计考虑点
 
@@ -124,7 +124,7 @@ Spring AOP的目标是对IoC容器中管理的对象进行合理和易用的拓�
 
 ### 具体实现
 
-![aop](/postsimg/spring/_aop_1535557097_1254202800.png)
+![aop](/postsimg/spring/aop-1535557097-1254202800.png)
 
 从整体架构上，Spring AOP的核心是代理，首先在`ProxyFactory`中，加入所需要织入该类的增强，然后创建代理对象，在创建代理对象之前，要指定增强的对象。`Advisor`在聚合了增强和切入点，在Spring AOP中是方面的一个完整抽象，也就是定义了“在什么地方/情况”需要“增强什么”，接下来看一个使用Spring AOP的例子，基于这个例子，我们来分析具体的源代码和设计实现思路。
 
@@ -143,7 +143,7 @@ Spring AOP的目标是对IoC容器中管理的对象进行合理和易用的拓�
         /**
          * 配置切入点，使用EL表达式
          */
-        private final String POINT_CUT = "execution(* com.example.demo.BizBean.*(..))";
+        private final String POINT-CUT = "execution(* com.example.demo.BizBean.*(..))";
 
         /**
          * 配置环绕增强
@@ -151,7 +151,7 @@ Spring AOP的目标是对IoC容器中管理的对象进行合理和易用的拓�
          * @param point ProceedingJoinPoint
          * @return Object
          */
-        @Around(POINT_CUT)
+        @Around(POINT-CUT)
         public Object aroundAdvice(ProceedingJoinPoint point){
             System.out.println("around before");
             Object object = null;
@@ -251,11 +251,11 @@ around after
 
     public BeanDefinition parse(Element element, ParserContext parserContext) {
         /**
-         * 注册 AUTO_PROXY_CREATOR_BEAN_NAME :{@link AnnotationAwareAspectJAutoProxyCreator}
+         * 注册 AUTO-PROXY-CREATOR-BEAN-NAME :{@link AnnotationAwareAspectJAutoProxyCreator}
          */
         AopNamespaceUtils.registerAspectJAnnotationAutoProxyCreatorIfNecessary(parserContext, element);
         /**
-         * 对上一步生成注册的 AUTO_PROXY_CREATOR_BEAN_NAME进一步拓展，主要是定义需要自动扫描生成自动代理的package
+         * 对上一步生成注册的 AUTO-PROXY-CREATOR-BEAN-NAME进一步拓展，主要是定义需要自动扫描生成自动代理的package
          */
         extendBeanDefinition(element, parserContext);
         return null;
@@ -287,8 +287,8 @@ around after
     private static BeanDefinition registerOrEscalateApcAsRequired(Class<?> cls, BeanDefinitionRegistry registry, Object source) {
         Assert.notNull(registry, "BeanDefinitionRegistry must not be null");
         // 如果已经存在对应的 org.springframework.aop.config.internalAutoProxyCreator BeanDefinition
-        if (registry.containsBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME)) {
-            BeanDefinition apcDefinition = registry.getBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME);
+        if (registry.containsBeanDefinition(AUTO-PROXY-CREATOR-BEAN-NAME)) {
+            BeanDefinition apcDefinition = registry.getBeanDefinition(AUTO-PROXY-CREATOR-BEAN-NAME);
             // 并且类型不一样
             if (!cls.getName().equals(apcDefinition.getBeanClassName())) {
                 int currentPriority = findPriorityForClass(apcDefinition.getBeanClassName());
@@ -307,9 +307,9 @@ around after
         // 如果不存在，注册一个
         RootBeanDefinition beanDefinition = new RootBeanDefinition(cls);
         beanDefinition.setSource(source);
-        beanDefinition.getPropertyValues().add("order", Ordered.HIGHEST_PRECEDENCE);
-        beanDefinition.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
-        registry.registerBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME, beanDefinition);
+        beanDefinition.getPropertyValues().add("order", Ordered.HIGHEST-PRECEDENCE);
+        beanDefinition.setRole(BeanDefinition.ROLE-INFRASTRUCTURE);
+        registry.registerBeanDefinition(AUTO-PROXY-CREATOR-BEAN-NAME, beanDefinition);
         return beanDefinition;
     }
 
@@ -322,12 +322,12 @@ around after
     private static void useClassProxyingIfNecessary(BeanDefinitionRegistry registry, Element sourceElement) {
         if (sourceElement != null) {
             // proxy-target-class = true
-            boolean proxyTargetClass = Boolean.valueOf(sourceElement.getAttribute(PROXY_TARGET_CLASS_ATTRIBUTE));
+            boolean proxyTargetClass = Boolean.valueOf(sourceElement.getAttribute(PROXY-TARGET-CLASS-ATTRIBUTE));
             if (proxyTargetClass) {
                 AopConfigUtils.forceAutoProxyCreatorToUseClassProxying(registry);
             }
             // expose-class = true
-            boolean exposeProxy = Boolean.valueOf(sourceElement.getAttribute(EXPOSE_PROXY_ATTRIBUTE));
+            boolean exposeProxy = Boolean.valueOf(sourceElement.getAttribute(EXPOSE-PROXY-ATTRIBUTE));
             if (exposeProxy) {
                 AopConfigUtils.forceAutoProxyCreatorToExposeProxy(registry);
             }
@@ -336,21 +336,21 @@ around after
     private static void registerComponentIfNecessary(BeanDefinition beanDefinition, ParserContext parserContext) {
         if (beanDefinition != null) {
             BeanComponentDefinition componentDefinition =
-                    new BeanComponentDefinition(beanDefinition, AopConfigUtils.AUTO_PROXY_CREATOR_BEAN_NAME);
+                    new BeanComponentDefinition(beanDefinition, AopConfigUtils.AUTO-PROXY-CREATOR-BEAN-NAME);
             parserContext.registerComponent(componentDefinition);
         }
     }
 
     public static void forceAutoProxyCreatorToUseClassProxying(BeanDefinitionRegistry registry) {
-        if (registry.containsBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME)) {
-            BeanDefinition definition = registry.getBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME);
+        if (registry.containsBeanDefinition(AUTO-PROXY-CREATOR-BEAN-NAME)) {
+            BeanDefinition definition = registry.getBeanDefinition(AUTO-PROXY-CREATOR-BEAN-NAME);
             definition.getPropertyValues().add("proxyTargetClass", Boolean.TRUE);
         }
     }
 
     static void forceAutoProxyCreatorToExposeProxy(BeanDefinitionRegistry registry) {
-        if (registry.containsBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME)) {
-            BeanDefinition definition = registry.getBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME);
+        if (registry.containsBeanDefinition(AUTO-PROXY-CREATOR-BEAN-NAME)) {
+            BeanDefinition definition = registry.getBeanDefinition(AUTO-PROXY-CREATOR-BEAN-NAME);
             definition.getPropertyValues().add("exposeProxy", Boolean.TRUE);
         }
     }
@@ -379,7 +379,7 @@ around after
 
 `AnnotationAwareAspectJAutoProxyCreator`的集成结构图如下，
 
-![annotationaware](/postsimg/spring/_annotation_1535620059_8825.png)
+![annotationaware](/postsimg/spring/annotation-1535620059-8825.png)
 
 从中可以发现，它本身也是一个`BeanPostProcessor`，在前面的`IoC`核心容器分析中，我们知道这是一种在`Bean`各个生命周期阶段拓展的机制。由此，我们可以猜测，Spring的AOP可能是在`Bean`初始后的时候，针对实例化后的被代理对象`target`，生成动态代理`target-proxy`，取代被代理对象`target`，作为IoC容器的托管对象。
 
@@ -453,7 +453,7 @@ around after
         // 生成代理和 {@link #postProcessBeforeInstantiation} 行为一致
     // 使用{@link SingletonTargetSource} 作为默认的{@link TargetSource} 实现
         Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
-        if (specificInterceptors != DO_NOT_PROXY) {
+        if (specificInterceptors != DO-NOT-PROXY) {
             this.advisedBeans.put(cacheKey, Boolean.TRUE);
             Object proxy = createProxy(
                     bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean));
@@ -732,7 +732,7 @@ around after
     }
 ````
 
-![findAdvisors](/postsimg/spring/_findadviso_1535707688_4416.png)
+![findAdvisors](/postsimg/spring/findadviso-1535707688-4416.png)
 
 到这里，我们将所有的候选`Advisor`，下一步将从候选中，选择符合当前`Bean`的`Advisor`
 
@@ -873,7 +873,7 @@ Spring AOP中，代理类的创建委托给`ProxyFactory`来实现，主要分�
 5. 提供模板方法，可以在具体的实现类中进行自定义
 6. 创建代理
 
-![createProxy](/postsimg/spring/_createprox_1535942384_6942.png)
+![createProxy](/postsimg/spring/createprox-1535942384-6942.png)
 
 整体调用时序如上，接下来看如何构建`Advisors`
 

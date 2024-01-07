@@ -11,7 +11,7 @@ description: TCP 协议的原理
 
 我们先看一下 TCP 的报文结构
 
-![TCP](/postsimg/tcp/tcp-1540020371-766768898.png)
+![TCP](/assets/img/tcp/tcp-1540020371-766768898.png)
 
 其实协议说到底就是共识，首先能够表达自己想要表达的内容，其次接收方也能够理解。一般来讲只要看协议的内容，就可以猜测出协议大致要完成的事情。首先，两个端口号，用于区分发送和接受的进程；序号，则是为了控制报文发送和接收的顺序；TCP为了保证报文传输的可靠性，没传输一个数据报，都要进行确认；状态位，SYN是发起一个连接同步端到端序号，ACK是应答，RST是重新连接，FIN是结束连接等；窗口大小，通信的两端都可以根据自己的处理能力，声明一个窗口大小，用于进行流量控制；校验和，保证数据的完整性。
 
@@ -19,13 +19,13 @@ description: TCP 协议的原理
 
 我们首先来讲一讲为什么 TCP 是面向连接的，所谓的连接其实并不像现实生活中，有一条具体的线连接端到段来进行通信。而是在客户端和服务端中，维护一组状态，通过状态来判断两边的通道是否畅通。而我们常说的建立连接的三次握手，也真是在客户端和服务端建立起这样的状态映射。而四次挥手，则是重置两端的状态。
 
-![Handshake](/postsimg/tcp/handshake-1540056382-533604472.png)
+![Handshake](/assets/img/tcp/handshake-1540056382-533604472.png)
 
 一开始客户端和服务端都处于 CLOSED 状态；先是服务端监听某个端口，处于 LISTEN 状态；接着客户端发起连接，发送 SYN，接着客户端处于 SYN-SENT 状态；服务端收到后，发送应答，发送 SYN 接收到的 客户端 SYN 的应答 ACK，并且将自己的状态修改为  SYN-RCVD；客户端接收到服务端的 ACK 之后，发送一个 ACK 的应答 ACK，并且将状态修改为 ESTABLISHED状态；服务端收到 ACK 之后，也修改为 ESTABLISHED。建立连接后，都处于 ESTABLISHED 的两端，就可以进行端到端的通信了。
 
 通过抓包工具，我们也可以看到这个过程
 
-![wireshark](/postsimg/tcp/wireshark-1540436312-3838.png)
+![wireshark](/assets/img/tcp/wireshark-1540436312-3838.png)
 
 有没有想过，为什么建立连接要是三次握手呢？两次可以吗？四次呢？其实客户端和服务端之间的网络是不可靠的，任何的信息在传递的过程中都可能丢失，这也是互联网的实际情况。客户端发送请求，收不到响应，可能是因为发送的请求丢失了，也可能是返回的响应丢失了，也可能是根本服务端就没有发送响应，而只有当客户端一发一收，才可能认为和服务端建立了连接。对于服务端来说，也是一样的，收到了请求，发送出去的响应，最好也能够让自己知道客户端已经收到，这样也建立一收一发的机制。才可以比较可靠地建立连接。当然如果你细究，其实三次也是不够的，客户端还会想再得到 ACK 的 ACK 的 ACK，这样就算三百次也不能够完全可信，因为响应发送出去之后，服务端或者客户端都有可能出现故障，而无法建立连接，这种情况其实和分布式的一致性问题本质是相同的。对于TCP协议来讲，保持两端都能够一收一发，就是选择三次握手的原因。而因为特殊情况导致的连接状态异常，则可以通过类似超时断开连接、keeplive探测等来处理。
 
@@ -33,7 +33,7 @@ description: TCP 协议的原理
 
 由于 TCP 连接是双工的，也就是建立连接之后，两端都可以独立发送数据的写通道和接受数据的读通道。因此每个方向都需要单独进行关闭。原则是：当一方完成数据发送后就能发送一个 FIN 来终止这个方向的连接。收到一个 FIN 意味着这个方向上没有数据流动，一个 TCP 连接在收到一个 FIN 后仍能发送数据，也就是出于半关闭状态。首先进行关闭的一方执行主动关闭，另一方执行被动关闭，最终将两端状态重置，连接完全关闭。
 
-![fourwayhandshake](/postsimg/tcp/fourwayhan-1540536997-7721.png)
+![fourwayhandshake](/assets/img/tcp/fourwayhan-1540536997-7721.png)
 
 我们假设主动发起关闭的一方为 客户端 A，被动关闭的一方为 服务器 B，反之也是一样。通信两端是平等的。
 
@@ -55,7 +55,7 @@ description: TCP 协议的原理
 
 对应的网络抓包
 
-![fourwayhandshake](/postsimg/tcp/fourwayhan-1540538678-17267.png)
+![fourwayhandshake](/assets/img/tcp/fourwayhan-1540538678-17267.png)
 
 这里需要额外讲的是 TIME_WAIT 状态。之前有一个项目，使用 Redis 作为共享缓存，因为连接池、Redis 集群 keepalive 设置不当，导致应用服务器大量的处于 TIME_WAIT 状态的连接；也有一次使用 Jmeter做压力测试，Nginx Keepalive 参数的配置不当，也导致部分 Tomcat 节点大量 TIME_WAIT 状态。两次都对性能有比较大的影响。
 
@@ -91,11 +91,11 @@ net.ipv4.tcp_tw_recycle = 1  开启对 TIME_WAIT 的连接的快速回收，默�
 
 TCP是基于流（stream）的协议。可以这么来理解流的概念，整个 HTTP 的请求过程，包含三次握手在内，所有发送的数据，可以看成是一串由 bit 组成的数据流。三次握手中的 SYN、SYN+ACK、ACK 则是按照一定的规则切分成的一个个包（packet），是 TCP 流最开始前的部分数据。就像是一根连接客户端和服务端的管道，管道中流动着 bit 数据，有时候管道是满的，有时候是空的，每当调用一次发送的时候，就会有大量的 bit 数据，从一端流动到另一端，但是每一次调用 write 发送的数据，都是在这个管道里面传输，可以保证发送的数据是有序的，却没有明显的边界来区分每一次 write 发送的数据区间，这就是说 TCP 是基于流的协议。
 
-![stream](/postsimg/tcp/stream-1540287580-2611.png)
+![stream](/assets/img/tcp/stream-1540287580-2611.png)
 
 包的概念呢？这和数据链路层传输数据的方式有关系。数据链路层位于物理层和网络层之间，其设计的目的就是顺利为网络层提供数据服务。链路层的数据传输单元称之为帧（Frame），数据链路层的任务就是将上层的数据封装成帧交给物理层传输，其格式为：
 
-![Frame](/postsimg/tcp/frame-1540369078-21703.png)
+![Frame](/assets/img/tcp/frame-1540369078-21703.png)
 
 帧的大小有一定的限制称为 MTU（Maxinum Transmission Unit 最大传输单元）。在因特网协议中，一条因特网传输路径的 MTU 被定义为从源地址到目的地址所经过“路径”上的所有IP跳的最大传输单元的最小值，这个值和传输路径中的各个网卡和串口的设置有关系。比如典型的局域网——以太网这个大小为 1500字节。
 
@@ -171,7 +171,7 @@ Client -> [ACK] seq = 55566，ack = 22244 (= 22222 + 22)，len = 0 -> Server
 
 我们假设每一个字节为一个TCP报文段
 
-![Tcpsendbuf](/postsimg/tcp/tcpsendbuf-1540461457-24389.png)
+![Tcpsendbuf](/assets/img/tcp/tcpsendbuf-1540461457-24389.png)
 
 * LastByteAcked：第一部分和第二部分的分界线
 * LastByteSent：第二部分和第三部分的分界线
@@ -185,7 +185,7 @@ Client -> [ACK] seq = 55566，ack = 22244 (= 22222 + 22)，len = 0 -> Server
 2. 尚未接收但准备好接收。
 3. 尚未接收并且尚未准备接收。
 
-![tcpreceivedbuf](/postsimg/tcp/tcpreceive-1540461885-20215.png)
+![tcpreceivedbuf](/assets/img/tcp/tcpreceive-1540461885-20215.png)
 
 * MaxRcvBuffer：最大缓存的量；
 * LastByteRead 之后是已经接收了，但是还没有被应用层读取的；
@@ -201,11 +201,11 @@ NextByteExpected 和 LastByteRead 的差其实是被应用层读取的部分占�
 
 为了方便说明，还是使用前面的两张图来表示发送端和接收端的缓冲区快照。
 
-![Tcpsendbuf](/postsimg/tcp/tcpsendbuf-1540461457-24389.png)
+![Tcpsendbuf](/assets/img/tcp/tcpsendbuf-1540461457-24389.png)
 
 在发送端来看，1、2、3已经发送并确认；4、5、6、7、8、9 都是发送了还没确认；10、11、12 是还没发出的；13、14、15 是接收方没有空间，不准备发的。
 
-![tcpreceivedbuf](/postsimg/tcp/tcpreceive-1540461885-20215.png)
+![tcpreceivedbuf](/assets/img/tcp/tcpreceive-1540461885-20215.png)
 
 在接收端看来，1、2、3、4、5是已经完成 ACK，但是没有读取的；6、7是等待接受的；8、9是已经接受，但是没有 ACK 的（注意虚线）。
 
@@ -241,34 +241,34 @@ NextByteExpected 和 LastByteRead 的差其实是被应用层读取的部分占�
 
 在对于包的确认中，同时会携带一个窗口的大小（win），例如
 
-![wireshark](/postsimg/tcp/wireshark-1540436312-3838.png)
+![wireshark](/assets/img/tcp/wireshark-1540436312-3838.png)
 
 我们继续以前面的图为例，我们先假设窗口不变的情况，窗口始终为 9。
 
-![tcpsndbuf](/postsimg/tcp/tcpsndbuf-1540523562-1954.png)
+![tcpsndbuf](/assets/img/tcp/tcpsndbuf-1540523562-1954.png)
 
 
 4 的 ACK 来的时候，会右移一个，这个时候第 13 个包也可以发送了。假设发送端将第三部分的 10、11、12、13全部发送完毕，之后就停止发送了，未发送可发送部分为 0。
 
-![tcpsndbuf2](/postsimg/tcp/tcpsndbuf2-1540523803-395.png)
+![tcpsndbuf2](/assets/img/tcp/tcpsndbuf2-1540523803-395.png)
 
 当对于包 5 的确认到达的时候，在客户端相当于窗口再滑动了一格，这个时候，才可以有更多的包可以发送了，例如第 14 个包材可以发送。
 
-![tcpsndbuf3](/postsimg/tcp/tcpsndbuf3-1540524060-6964.png)
+![tcpsndbuf3](/assets/img/tcp/tcpsndbuf3-1540524060-6964.png)
 
 如果接收方实在处理得太慢，导致缓冲中没有空间了，可以通过确认信息修改窗口的大小，甚至可以设置为 0，这发送方将暂停发送。
 
 我们假设一个极端情况，接收端的应用一直不读取缓存中的数据，LastByteRead 保持不变。当数据包 6 确认后，窗口大小就不能再是 9 了，就要缩小一个变成 8。
 
-![tcprevbuf](/postsimg/tcp/tcprevbuf-1540524139-31164.png)
+![tcprevbuf](/assets/img/tcp/tcprevbuf-1540524139-31164.png)
 
 如果接收端还是一直不处理数据，随着确认的包越来越多，窗口越来越小，直到为 0。
 
-![tcprevbuf2](/postsimg/tcp/tcprevbuf-1540524719-22158.png)
+![tcprevbuf2](/assets/img/tcp/tcprevbuf-1540524719-22158.png)
 
 当这个窗口通过包 14 的确认到达发送端的时候，发送端的窗口也调整为 0，停止发送。
 
-![tcpsndbuf](/postsimg/tcp/tcpsndbuf-1540524752-9738.png)
+![tcpsndbuf](/assets/img/tcp/tcpsndbuf-1540524752-9738.png)
 
 如果这样的话，发送方会定时发送窗口探测数据包，看是否有机会调整窗口的大小。当接收方比较慢的时候，要防止低能窗口综合征，别空出一个字节来就赶快告诉发送方，然后马上又填满了，可以当窗口太小的时候，不更新窗口，直到达到一定大小，或者缓冲区一半为空，才更新窗口。
 
@@ -284,7 +284,7 @@ TCP 拥塞控制的目的是在网络不堵塞、不丢包的情况下，尽量�
 
 这里有一个公式 **发送窗口 = LastByteSent - LastByteAcked <= min { 滑动窗口, 拥塞窗口 }**，是滑动窗口和拥塞窗口共同控制发送的速度。如果我们设置发送窗口，使得发送但未确认的包为通道的容量，就能够撑满整个管道。
 
-![congestioncontrol](/postsimg/tcp/congestion-1540532677-6744.png)
+![congestioncontrol](/assets/img/tcp/congestion-1540532677-6744.png)
 
 如图所示，假设往往时间为 8s，去 4s，回 4s，每秒发送一个包，每个包 1024 字节。已经过去了 8s，则 8 个包都发出去了，其中前 4 个包已经到达接收端，但是 ACK 还没有返回，不能算发送成功。5-8 后四个包还在路上，还没被接受。这个时候，整个管道正好撑满，在发送端，已经发送未确认的为 8 个包，正好等于带宽，也即每秒发送 1 个包，乘以来回时间 8s。
 
@@ -304,7 +304,7 @@ TCP 拥塞控制的目的是在网络不堵塞、不丢包的情况下，尽量�
 
 前面我们讲过**快速重传算法**。当接收端发现丢了一个中间包的时候，发送三次前一个包的 ACK，于是发送端就会快速的重传，不必等待超时再重传。TCP 认为这种情况不严重，因为大部分没丢，只丢了一小部分，CWND减半为 CWND/2，然后sshthresh = CWND，当三个包返回的时候，CWND = sshthresh + 3，也就是没有一夜回到解放前，而是还在比较高的值，呈线性增长。
 
-![congestioncontrol](/postsimg/tcp/congestion-1540534637-29517.png)
+![congestioncontrol](/assets/img/tcp/congestion-1540534637-29517.png)
 
 这个拥塞控制模型，也是存在一定的问题
 

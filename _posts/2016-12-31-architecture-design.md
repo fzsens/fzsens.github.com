@@ -88,7 +88,7 @@ description: 架构设计的方法论
 
 逻辑架构的设计应该使用，结构设计和行为设计相分离。使用灰盒包图，关注核心系统中的关键类。从而更明白地说明子系统之间的协作关系。
 
-![architecture](/assets/img/archituredesign/sequenceDia.jpg)
+![architecture](/assets/img/architecturedesign/sequenceDia.jpg)
 
 ### 架构的权衡
 

@@ -255,7 +255,7 @@ public class Executors {
 
 ![ThreadPoolExecutor](/assets/img/threadpoolexecutor/threadpool-1534388286-22595.png) 
 
-[图片来源](http://www.infoq.com/cn/articles/executor-framework-thread-pool-task-execution-part-01#)
+[图片来源](https://www.infoq.com/cn/articles/executor-framework-thread-pool-task-execution-part-01#)
 
 `Executor`抽象定义了一个提交任务的执行器接口，只要用户将任务提交到`Executor`中就会运行，至于是怎么运行，由谁来运行，用户就可以不用关心了。
 `ExecutorService`拓展了`Executor`，并添加了关闭线程管理（提交任务之后就相当于是将任务交给`Executor`这个执行器管理）`shutdown`，异步值返回`submit`，批量执行`invokeAll`等方法，进一步拓展了任务执行器的功能范围。

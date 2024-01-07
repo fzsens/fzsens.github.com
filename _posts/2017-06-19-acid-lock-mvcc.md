@@ -26,7 +26,7 @@ description: 介绍事务的ACID特征，以及对应的锁和MVCC控制
 > 不可重复读：在同一事务中，两次读取同一数据，得到内容不同，典型的例子就是在两次查询之间进行了事务操作提交，导致两次查询的结果不一致
 > 幻读：和不可重复读类似，不可重复读针对的是已有的数据，而幻读针对的是原来没有的数据，也就是insert操作。典型的例子，A事务执行范围查询，B事务插入一行记录，该记录刚好在A事务的查询范围之内，并提交，此时A两次查询的数据行不一致，出现幻读的核心原因就是无法对不存在的数据添加行锁，备注：MySQL利用MVCC实现了一致性读，并且会在查询范围内加Gap锁，保证范围内的数据不被插入，从而避免了幻读，但无法处理插入时候的冲突。
 
-隔离性的实现又可以分成两类，一类是基于锁的并发控制(Lock-Based Concurrency Control)，一类是给予多版本的并发控制([Multi-Version Concurrency Control](http://en.wikipedia.org/wiki/Multiversion_concurrency_control)。
+隔离性的实现又可以分成两类，一类是基于锁的并发控制(Lock-Based Concurrency Control)，一类是给予多版本的并发控制([Multi-Version Concurrency Control](https://en.wikipedia.org/wiki/Multiversion_concurrency_control)。
 
 ####  LBCC
 
@@ -63,9 +63,9 @@ delete from table where ?;
 
 数据库中的锁和并发控制mvcc都是非常复杂而细节的内容，更加具体的实现可以参考
 
-[Mysql中的MVCC](http://blog.csdn.net/chen77716/article/details/6742128) 
+[Mysql中的MVCC](https://blog.csdn.net/chen77716/article/details/6742128) 
 
-[MySQL加锁分析](http://hedengcheng.com/?p=771)
+[MySQL加锁分析](https://hedengcheng.com/?p=771)
 
 
 

@@ -19,8 +19,8 @@ Canal Server模拟MySQL的Slave服务器，dump MySQL的binlog并解析成为事
 
 更多关于Canal的介绍可以参考
 [Canal Wiki](https://github.com/alibaba/canal/wiki)
-[Canal](http://www.iteye.com/topic/1129002)
-[Otter](http://www.iteye.com/topic/1131759)
+[Canal](https://www.iteye.com/topic/1129002)
+[Otter](https://www.iteye.com/topic/1131759)
 
 ### 构建Redis缓存
 

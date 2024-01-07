@@ -7,7 +7,7 @@ tags: [mybatis]
 description: 介绍Mybatis常用使用方法
 ---
 
->上一章花费了大量时间描述了Mybatis的产生背景，本章主要参考[Mybatis的官方用户文档](http://www.mybatis.org/mybatis-3/zh/getting-started.html) 简要表述Mybatis的使用方法，并使用一个例子贯穿进行说明和讲解。
+>上一章花费了大量时间描述了Mybatis的产生背景，本章主要参考[Mybatis的官方用户文档](https://www.mybatis.org/mybatis-3/zh/getting-started.html) 简要表述Mybatis的使用方法，并使用一个例子贯穿进行说明和讲解。
 >如果想要彻底了解Mybatis的使用和配置方式，都可以通过官方用户文档来获取相关的配置资料，本章只适合作为导读
 
 ### 创建SqlSessionFactory

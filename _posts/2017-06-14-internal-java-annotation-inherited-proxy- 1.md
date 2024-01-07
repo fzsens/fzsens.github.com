@@ -286,7 +286,7 @@ System.in.read();
 
 测试的内容也很简单，首先构建实例和代理类实力，接着对代理累进行Annotation分析，然后调用代理方法，在代理方法的植入代码中，再次调用Annotation分析，为了能够提取动态生成的.class文件，在最后加入一个堵塞操作。
 
-> 在提取class文件的时候，我们会用到HSDB(Hostspot Debugger)，我们这里主要会用到，classes browser 的功能，使用Windows7 X64，在Cmd下使用，`Java -classpath "%JAVA_HOME%/lib/sa-jdi.jar" sun.jvm.hotspot.HSDB` 打开HSDB，Attach对应的Java执行进程之后，选择Tools即可看到，更加详细的使用可以参考[借HSDB来探索HotSpot VM的运行时数据](http://rednaxelafx.iteye.com/blog/1847971)
+> 在提取class文件的时候，我们会用到HSDB(Hostspot Debugger)，我们这里主要会用到，classes browser 的功能，使用Windows7 X64，在Cmd下使用，`Java -classpath "%JAVA_HOME%/lib/sa-jdi.jar" sun.jvm.hotspot.HSDB` 打开HSDB，Attach对应的Java执行进程之后，选择Tools即可看到，更加详细的使用可以参考[借HSDB来探索HotSpot VM的运行时数据](https://rednaxelafx.iteye.com/blog/1847971)
 
 #### 走进科学
 

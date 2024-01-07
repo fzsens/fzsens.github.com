@@ -9,7 +9,7 @@ description: 对zookeeper leader-election的描述
 
 ### ZooKeeper选举过程
 
-为了实现zookeeper的高可用，一般会以集群的方式来搭建。集群机器的数量一般为2n+1台，在zoo.cfg中进行配置，具体可以参考[Zookeeper Admin](http://zookeeper.apache.org/doc/r3.4.8/zookeeperAdmin.html#sc_zkMulitServerSetup)。
+为了实现zookeeper的高可用，一般会以集群的方式来搭建。集群机器的数量一般为2n+1台，在zoo.cfg中进行配置，具体可以参考[Zookeeper Admin](https://zookeeper.apache.org/doc/r3.4.8/zookeeperAdmin.html#sc_zkMulitServerSetup)。
 
 在集群运行下zk使用了一种leader-follower的模式运行
 

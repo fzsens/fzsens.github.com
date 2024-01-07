@@ -11,13 +11,13 @@ description: 对基础Paxos算法的解读和推导
 
 ### Paxos解决的问题
 
-如我们在上一篇文章[《多副本和分布式一致性》](http://fzsens.github.io/consensus/2017/03/29/replications-and-consensus/ "多副本和分布式一致性")中讨论的，在分布式系统中一个核心的问题：“在多个不可靠的节点中，达成一个确定的状态”。而这也正是`Paxos`算法解决的问题。
+如我们在上一篇文章[《多副本和分布式一致性》](https://fzsens.github.io/consensus/2017/03/29/replications-and-consensus/ "多副本和分布式一致性")中讨论的，在分布式系统中一个核心的问题：“在多个不可靠的节点中，达成一个确定的状态”。而这也正是`Paxos`算法解决的问题。
 
 网上对`Paxos`算法的讨论已经很多，大多数文章都会在开头吐槽一下`Paxos`论文，也就是《 Paxos Made Simple》、《The Part-Time Parliament》的难懂，在我看来这些“难懂”更多是因为算法本身过于抽象，`Leslie Lamport`对于算法本身的细节了然于胸，但是对其中的很多隐喻、以及可能存在的不同场景，却很缺少直观的描述。以致于可能全文都已经看完，却还是不知道`Paxos`算法为什么可以保证分布式的一致性、以及我们怎么在系统中应用。
 
 ### 线性推导
 
->这是在知乎上一个知友对[Paxos的推导过程](https://www.zhihu.com/question/19787937/answer/82340987)，和[《多副本和分布式一致性》](http://qiongsong.com/consensus/2017/03/29/replications-and-consensus/ "多副本和分布式一致性")类似，但是使用更加直白的描述性语言，对于最初理解Paxos算法很有帮助，下文为对整个推导过程的复述，我尽量做到没有隐含条件，尽量详细通俗地表述整个过程。
+>这是在知乎上一个知友对[Paxos的推导过程](https://www.zhihu.com/question/19787937/answer/82340987)，和[《多副本和分布式一致性》](https://qiongsong.com/consensus/2017/03/29/replications-and-consensus/ "多副本和分布式一致性")类似，但是使用更加直白的描述性语言，对于最初理解Paxos算法很有帮助，下文为对整个推导过程的复述，我尽量做到没有隐含条件，尽量详细通俗地表述整个过程。
 
 开始推导之前，先完成本次推导中一致的初步定义：
 
@@ -220,11 +220,11 @@ CP1约束了，如果一个Pj.proposal被确定，则不可能存在Pi.proposal.
 
 对于`Paxos算法`论文的的证明和说明，网上的资料浩如烟海，写得也都非常详细，我就不再赘述，只把一些要点做归纳总结
 
-* [Paxos Made Simple译文](http://dsdoc.net/paxosmadesimple/index.html)
+* [Paxos Made Simple译文](https://dsdoc.net/paxosmadesimple/index.html)
 
 注：《Paxos Made Simple》的论文原文阅读并不困难，推荐这篇译文主要可以结合最后的译者注，对照自己对文章的理解，其中也补全了部分原文中没有说明的隐喻。
 
-* [Paxos算法1-算法形成理论](http://blog.csdn.net/chen77716/article/details/6166675#reply)
+* [Paxos算法1-算法形成理论](https://blog.csdn.net/chen77716/article/details/6166675#reply)
 
 注：
 
@@ -234,22 +234,22 @@ CP1约束了，如果一个Pj.proposal被确定，则不可能存在Pi.proposal.
 4. 使用的数学归纳法，归纳法第一步：m成立 => m+1成立，可以推广到 [m+1,n-1)成立。第二步在证明[m,n-1)成立的基础上，推论出n的成立。使用还是多数派必然存在交集的原理。
 5. P1并不完备，既P1存在无法解决的矛盾-接受了第一个提案之后，如何处理后续收到的提案；P2c在推论出P2的时候，同时通过协议流程对接受和拒绝的描述，补全P1完备性。
 
-* [Paxos算法2-算法过程](http://blog.csdn.net/chen77716/article/details/6170235#reply)
+* [Paxos算法2-算法过程](https://blog.csdn.net/chen77716/article/details/6170235#reply)
 
 注：
 
 1. 这一篇和上一篇属于同一个作者的同一个系列，通过对Paxos算法过程的讨论，引出实现中可能会遇到的问题
-2. 其中关于Paxos和Master-Slave/Master-Master的说明，实际上Paxos算法并不需要一个Leader/Master，选择Leader的考虑是为了减少可能出现的活锁(多个proposer在prepare阶段相互覆盖proposal_id)，就算是出现多个Leader，Paxos算法也可以保证一致性。而M-S需要Master是一个固定的角色，[《多副本和分布式一致性》](http://qiongsong.com/consensus/2017/03/29/replications-and-consensus/ "多副本和分布式一致性")有对应的描述，可以对比一下。
+2. 其中关于Paxos和Master-Slave/Master-Master的说明，实际上Paxos算法并不需要一个Leader/Master，选择Leader的考虑是为了减少可能出现的活锁(多个proposer在prepare阶段相互覆盖proposal_id)，就算是出现多个Leader，Paxos算法也可以保证一致性。而M-S需要Master是一个固定的角色，[《多副本和分布式一致性》](https://qiongsong.com/consensus/2017/03/29/replications-and-consensus/ "多副本和分布式一致性")有对应的描述，可以对比一下。
 3. 关于Paxos和两阶段提交，Paxos的两个阶段和2PC有异曲同工之妙，每一个单独的Proposer和Acceptor的交互都可以看作是一次2PC，但是Paxos重点突破的是2PC的单点问题，2PC如果作为接入点的协调者出现了异常整个应用是不可用的。而Paxos，每一个进程都是平等的，都可以承担接入点的角色，可以在(N-1)/2个节点出现故障的时候保证一致性。
-4. 关于Paxos和3PC的区别，文章中没有描述，实际上3PC是对2PC的一个改进，通过引入协调者选举、超时和precommit作为中间状态来解决2PC的单点故障和堵塞问题。但是3PC可能会引起网络分区问题，假设一个网络被分割成为两个彼此无法进行通信的网络，A部分都受到了precommit，B部分都没有，可能会选择出两个协调者，A部分的协调者决定提交precommit，而B分别的协调者没有提交这个precommit，造成数据不一致。也有改进的3PC，也是通过多数派原则来尝试解决3PC的问题[《Increasing the Resilience of Distributed and Replicated Database Systems》](http://people.csail.mit.edu/idish/ftp/JCSS.pdf)。
+4. 关于Paxos和3PC的区别，文章中没有描述，实际上3PC是对2PC的一个改进，通过引入协调者选举、超时和precommit作为中间状态来解决2PC的单点故障和堵塞问题。但是3PC可能会引起网络分区问题，假设一个网络被分割成为两个彼此无法进行通信的网络，A部分都受到了precommit，B部分都没有，可能会选择出两个协调者，A部分的协调者决定提交precommit，而B分别的协调者没有提交这个precommit，造成数据不一致。也有改进的3PC，也是通过多数派原则来尝试解决3PC的问题[《Increasing the Resilience of Distributed and Replicated Database Systems》](https://people.csail.mit.edu/idish/ftp/JCSS.pdf)。
 
 * [Paxos理论介绍(1): 朴素Paxos算法理论推导与证明](https://zhuanlan.zhihu.com/p/21438357?refer=lynncui)
 
 注：这是微信的PhxPaxos组件的开发者介绍Basic Paxos的文章，可以通过给出的表格来加深对选举过程的理解。
 
-* [Paxos算法3-实现探讨 ](http://blog.csdn.net/chen77716/article/details/6172392)
+* [Paxos算法3-实现探讨 ](https://blog.csdn.net/chen77716/article/details/6172392)
 
-注：这部分，重点讨论了Paxos实现时候，主要角色需要完成的功能可微信的[《微信自研生产级paxos类库PhxPaxos实现原理介绍》](http://mp.weixin.qq.com/s?__biz=MzI4NDMyNTU2Mw==&mid=2247483695&idx=1&sn=91ea422913fc62579e020e941d1d059e#rd)可以互为补充。
+注：这部分，重点讨论了Paxos实现时候，主要角色需要完成的功能可微信的[《微信自研生产级paxos类库PhxPaxos实现原理介绍》](https://mp.weixin.qq.com/s?__biz=MzI4NDMyNTU2Mw==&mid=2247483695&idx=1&sn=91ea422913fc62579e020e941d1d059e#rd)可以互为补充。
 
 ### 总结
 

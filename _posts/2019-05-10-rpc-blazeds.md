@@ -20,7 +20,7 @@ description: 系统间通信技术 blazeds 和 spring remoting
 
 #### Flex BlazeDS
 
-刚从事工作的时候，公司还大规模使用基于 BlazeDS 的 Adobe Flex + Java 技术体系。关于Flex，目前已经很少使用了，在十年前，Flash最流行的时候也算是炙手可热的技术了，很多现在前端框架正在践行的理念，比如大前端、模块化、双向数据绑定等，借助强大的 avm 虚拟机和 actionscript 在 Flex 中都有所应用。虽然最终因为种种原因被抛弃，但是个人觉得Flex是一个非常有前瞻性的技术，有兴趣的同学，可以自行了解一下 [Apache Flex](http://flex.apache.org/)。
+刚从事工作的时候，公司还大规模使用基于 BlazeDS 的 Adobe Flex + Java 技术体系。关于Flex，目前已经很少使用了，在十年前，Flash最流行的时候也算是炙手可热的技术了，很多现在前端框架正在践行的理念，比如大前端、模块化、双向数据绑定等，借助强大的 avm 虚拟机和 actionscript 在 Flex 中都有所应用。虽然最终因为种种原因被抛弃，但是个人觉得Flex是一个非常有前瞻性的技术，有兴趣的同学，可以自行了解一下 [Apache Flex](https://flex.apache.org/)。
 
 Flex+Java开发的 B/S 应用系统中，B系统（客户端系统）和S系统（服务端系统）完全分离，各自独立运行在不同的CPU和虚拟机中，B系统主要负责“展现层”逻辑，而S系统主要负责“领域层”和“数据源层”逻辑，因此 Flex+Java 所开发的企业应用系统是异构的分布式系统。BlazeDS就是解决异构的客户端系统和服务器端系统如何通信的问题。
 

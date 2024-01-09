@@ -125,5 +125,7 @@ public class B implements AA {
 简而言之两者讨论的维度是不同的，DI 讨论的是在**运行时依赖方和被依赖方**是如何进行实例化和组装管理的，而 DIP 讨论的这是关于代码的组织方式的问题；二者的联系是，当代码符合 DIP 的时候，通过 DI 框架可以更加容易地管理这种依赖在运行时的关系。
 
 参考资料
+
 [Dependency Inversion Principle - Spring Framework Guru](https://springframework.guru/principles-of-object-oriented-design/dependency-inversion-principle/)
+
 [Understanding SOLID Principles: Dependency Inversion - DEV Community](https://dev.to/tamerlang/understanding-solid-principles-dependency-inversion-1b0f)
